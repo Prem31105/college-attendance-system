@@ -1,4 +1,4 @@
-# PROJECT_STATE.md
+﻿# PROJECT_STATE.md
 
 ## 1. Project Overview
 Autonomous College Attendance Management System featuring Dynamic QR code projection, GPS geofencing (75m), hardware-bound registered device signatures (Keystore/Keychain), optional local biometrics, random teacher verification, and a server-side multi-layer risk scoring engine.
@@ -14,31 +14,31 @@ Includes Flutter Student Mobile App, React TypeScript Web Dashboard (Teachers & 
 ## 3. Current Architecture & Folder Structure
 ```
 d:\flutter attandance\
-├── .gitignore
-├── .env.example
-├── README.md
-├── PROJECT_STATE.md
-├── AGENT_HANDOFF.md
-├── DEVELOPMENT_PROGRESS.md
-├── RESUME_PROJECT_PROMPT.md
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── DATABASE_SCHEMA.md
-│   ├── SECURITY.md
-│   └── TESTING.md
-├── snapshots/
-│   ├── README.md
-│   └── checkpoint-log.md
-├── scripts/
-│   ├── checkpoint.ps1
-│   ├── checkpoint.sh
-│   ├── rollback.ps1
-│   ├── rollback.sh
-│   ├── db_backup.ps1
-│   └── db_restore.ps1
-├── backend/            (NestJS API & Prisma ORM)
-├── web_dashboard/      (React + Vite + Tailwind Teacher/Admin Dashboard)
-└── student_mobile/     (Flutter Material 3 Student Mobile App)
+â”œâ”€â”€ .gitignore
+â”œâ”€â”€ .env.example
+â”œâ”€â”€ README.md
+â”œâ”€â”€ PROJECT_STATE.md
+â”œâ”€â”€ AGENT_HANDOFF.md
+â”œâ”€â”€ DEVELOPMENT_PROGRESS.md
+â”œâ”€â”€ RESUME_PROJECT_PROMPT.md
+â”œâ”€â”€ docs/
+â”‚   â”œâ”€â”€ ARCHITECTURE.md
+â”‚   â”œâ”€â”€ DATABASE_SCHEMA.md
+â”‚   â”œâ”€â”€ SECURITY.md
+â”‚   â””â”€â”€ TESTING.md
+â”œâ”€â”€ snapshots/
+â”‚   â”œâ”€â”€ README.md
+â”‚   â””â”€â”€ checkpoint-log.md
+â”œâ”€â”€ scripts/
+â”‚   â”œâ”€â”€ checkpoint.ps1
+â”‚   â”œâ”€â”€ checkpoint.sh
+â”‚   â”œâ”€â”€ rollback.ps1
+â”‚   â”œâ”€â”€ rollback.sh
+â”‚   â”œâ”€â”€ db_backup.ps1
+â”‚   â””â”€â”€ db_restore.ps1
+â”œâ”€â”€ backend/            (NestJS API & Prisma ORM)
+â”œâ”€â”€ web_dashboard/      (React + Vite + Tailwind Teacher/Admin Dashboard)
+â””â”€â”€ student_mobile/     (Flutter Material 3 Student Mobile App)
 ```
 
 ## 4. Feature Status Matrix
@@ -53,8 +53,8 @@ d:\flutter attandance\
 ## 5. Development Status
 - **Current Phase**: Phase 0 (Project Safety & Recovery Foundation)
 - **Current Git Branch**: `main`
-- **Latest Stable Commit Hash**: Initializing
-- **Latest Checkpoint ID**: `checkpoint-000` (Pre-baseline)
+- **Latest Stable Commit Hash**: 36b5684a4f9e31405649ae709d7a22bc312964cf
+- **Latest Checkpoint ID**: checkpoint-001
 - **Last Successful Build**: Initializing
 - **Last Successful Test Run**: Pending recovery test
 - **Known Errors**: None
@@ -91,3 +91,4 @@ d:\flutter attandance\
 1. Complete and verify Phase 0 snapshot/checkpoint/rollback scripts.
 2. Initialize Phase 1: Set up NestJS backend with Prisma ORM schema, migrations, seed, Argon2id, JWT auth, and RBAC guards.
 3. Initialize Phase 1: Set up React Web Dashboard with Tailwind CSS and base routing.
+

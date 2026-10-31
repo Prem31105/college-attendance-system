@@ -1,0 +1,8 @@
+﻿{
+    "checkpoint_id":  "checkpoint-001",
+    "timestamp_utc":  "2026-10-31T20:32:01Z",
+    "git_commit_hash":  "36b5684a4f9e31405649ae709d7a22bc312964cf",
+    "branch":  "main",
+    "description":  "Phase 0 Baseline: Safety \u0026 Recovery Foundation",
+    "status":  "VERIFIED"
+}

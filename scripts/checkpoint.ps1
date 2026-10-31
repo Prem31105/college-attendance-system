@@ -52,7 +52,8 @@ if ($ExistingCheckpoints) {
     $NextNum = 1
 }
 
-$CheckpointId = "checkpoint-" + ($NextNum.ToString("D3"))
+$NextNumInt = [int]$NextNum
+$CheckpointId = "checkpoint-{0:D3}" -f $NextNumInt
 Write-Host ">>> Checkpoint ID allocated: $CheckpointId" -ForegroundColor Yellow
 
 # 5. Stage files and Commit
