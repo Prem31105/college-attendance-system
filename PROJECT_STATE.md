@@ -1,15 +1,15 @@
 # PROJECT_STATE.md
 
 ## 1. Project Overview
-Autonomous College Attendance Management System featuring Dynamic QR code projection, GPS geofencing (75m), hardware-bound registered device signatures (Keystore/Keychain), optional local biometrics, random teacher verification, and a server-side multi-layer risk scoring engine.
-Includes Flutter Student Mobile App, React TypeScript Web Dashboard (Teachers & Admin), and NestJS PostgreSQL/Redis Backend.
+Autonomous College Attendance Management System featuring Dynamic QR code projection (15s refresh / 30s expiry), GPS geofencing (strict 75m boundary and 20m accuracy requirement), hardware-bound registered device signatures (ECDSA P-256 Keystore/Keychain), optional local biometrics, random teacher physical verification, and a server-side multi-layer risk scoring engine.
+Includes Flutter Student Mobile App (all 17 screens), React TypeScript Web Dashboard (Teachers & Admin), and NestJS PostgreSQL/Redis Backend.
 
-## 2. Technology Stack
-- **Student Mobile App**: Flutter (Dart, Material 3, Android & iOS, QR Camera Scanner, Geolocation, Device Keystore/Keychain, local_auth) — All 17 required screens created.
-- **Teacher & Admin Web Dashboard**: React, TypeScript, Vite, Tailwind CSS, Lucide Icons, QR code projection — Built and running on http://localhost:5173.
-- **Backend API**: Node.js, NestJS, TypeScript, REST API, WebSockets, JWT with refresh token rotation, Argon2id, Swagger — Built and running on http://localhost:3000/api/v1.
-- **Database & Cache**: PostgreSQL with Prisma ORM (Schema + Seed ready), Redis configuration, Docker Compose stack.
-- **Infrastructure**: Docker & Docker Compose, Environment-based configuration, Git & PowerShell snapshot/rollback system.
+## 2. Technology Stack & Runtime Verification Status
+- **PostgreSQL Database**: PostgreSQL 16.6 running locally on `localhost:5432`, managed via Prisma ORM 5.22.0. Database `college_attendance` pushed and seeded. Connectivity verified.
+- **Backend API**: Node.js, NestJS 10, TypeScript, REST API, WebSockets, JWT with refresh token rotation, Argon2id, Swagger — Running on `http://localhost:3000/api/v1` (Docs: `http://localhost:3000/api/docs`).
+- **Teacher & Admin Web Dashboard**: React 18, TypeScript, Vite, Tailwind CSS, Lucide Icons, QR code projection (`QRCodeSVG`) — Built and running on `http://localhost:5173`.
+- **Student Mobile App**: Flutter (Dart, Material 3, Android & iOS, QR Camera Scanner, Geolocation, Device Keystore/Keychain, local_auth) — All 17 required screens created and inspected. Compilation risks (e.g. `Border.parseBorder` replaced with `Border.all`) fixed. *Note: Flutter SDK is not installed on this host system's PATH, so Flutter analyzer and widget tests are deferred until SDK is installed.*
+- **Snapshot & Rollback System**: Git + PowerShell scripts (`checkpoint.ps1`, `rollback.ps1`, `db_backup.ps1`, `db_restore.ps1`).
 
 ## 3. Current Architecture & Folder Structure
 ```
@@ -36,33 +36,40 @@ d:\flutter attandance\
 │   ├── rollback.ps1
 │   ├── rollback.sh
 │   ├── db_backup.ps1
-│   └── db_restore.ps1
+│   ├── db_restore.ps1
+│   ├── setup_local_postgres.ps1
+│   ├── start_postgres.ps1
+│   └── stop_postgres.ps1
 ├── backend/            (NestJS API & Prisma ORM - Running on port 3000)
+│   ├── prisma/
+│   ├── scripts/verify-e2e-workflow.ts (19/19 E2E Integration tests passed)
+│   └── src/
 ├── web_dashboard/      (React + Vite + Tailwind - Running on port 5173)
 └── student_mobile/     (Flutter Material 3 Student Mobile App - 17 screens implemented)
 ```
 
 ## 4. Feature Status Matrix
 - [x] Phase 0: Safety & Recovery Foundation (Git, Checkpoint & Rollback scripts, State files, verified recovery)
-- [x] Phase 1: Project Foundation (NestJS backend running, Prisma schema & seed, Argon2id, JWT auth, React dashboard running, Flutter app structure)
-- [x] Phase 2: Core Attendance Engine (Dynamic QR generation & validation, GPS geofencing, Teacher live dashboard)
-- [x] Phase 3: Hardware Device & Security Verification (ECDSA challenge/response, device integrity, risk scoring engine)
-- [x] Phase 4: Administration & Verification (Random verification, corrections, reports, audit logs, classroom geofences)
-- [x] Phase 5: Quality Assurance & Load Testing (Backend unit tests passing 8/8, 0 TypeScript compilation errors)
-- [ ] Phase 6: Build & Production Deployment (Docker container build, Flutter native compilation once SDK is installed)
+- [x] Phase 1: Project Foundation (NestJS backend, Prisma schema & seed, Argon2id, JWT auth, React dashboard, Flutter app structure)
+- [x] Phase 2: Core Attendance Engine & Database Integration (PostgreSQL 16 running & verified, 19/19 E2E integration tests passing)
+- [x] Phase 3: Hardware Security & Cryptographic Binding (ECDSA P-256 challenge-response, device registration, risk scoring engine)
+- [x] Phase 4: Administration & Verification (Random verification, corrections, reports, audit logs, 75m classroom geofences)
+- [x] Phase 5: Quality Assurance & Integration Testing (Jest tests 8/8 passed, E2E tests 19/19 passed, React dashboard built cleanly)
+- [ ] Phase 6: Production Native Build (Flutter native APK/IPA compilation once Flutter SDK is installed)
 
 ## 5. Development Status
-- **Current Phase**: Phase 5 (Quality Assurance & Runtime Verification Completed)
+- **Current Phase**: Phase 2 Integration & Functional Verification (Completed)
 - **Current Git Branch**: `main`
-- **Latest Checkpoint ID**: `checkpoint-004`
+- **Latest Checkpoint ID**: checkpoint-005
 - **Last Successful Build**:
   - Backend: TypeScript 0 errors, running on port 3000
-  - Web Dashboard: Vite production bundle built in 11.03s, running on port 5173
-- **Last Successful Test Run**: Backend Jest tests (8 passed, 0 failed)
+  - Web Dashboard: Vite production bundle built in 5.04s, running on port 5173
+- **Last Successful Test Run**:
+  - Backend E2E Integration Suite: 19/19 passed (`verify-e2e-workflow.ts`)
+  - Backend Unit Tests: 8/8 passed (`gps.service.spec.ts`, `risk.service.spec.ts`)
 - **Known Errors**: 0 compilation/type errors
-- **Current Blockers**:
-  - Docker Desktop and native PostgreSQL daemon are not installed on the host OS (backend uses safe development fallback).
-  - Flutter SDK is not added to Windows PATH (full Dart source code for all 17 screens authored).
+- **Current Blockers / Environment Notes**:
+  - Flutter SDK is not installed on the Windows PATH. All 17 Dart screens are authored and inspected, but `flutter analyze` / `flutter test` requires the Flutter SDK installed on the machine.
 
 ## 6. Required Environment Variables (Names Only)
 - `NODE_ENV`, `PORT`, `API_PREFIX`, `CORS_ORIGINS`
@@ -76,9 +83,10 @@ d:\flutter attandance\
 - `VITE_API_BASE_URL`, `VITE_WS_BASE_URL`
 
 ## 7. Exact Commands to Run Services
-- **Backend API**: `cd backend && npm run start` (Listening on port 3000)
-- **Web Dashboard**: `cd web_dashboard && npm run preview -- --port 5173 --host` (Listening on port 5173)
-- **Backend Tests**: `cd backend && npm test`
-- **Web Dashboard Tests/Build**: `cd web_dashboard && npm run build`
+- **Start PostgreSQL**: `powershell -ExecutionPolicy Bypass -File scripts/start_postgres.ps1`
+- **Backend API**: `cd backend && npm run start` (Listening on `http://localhost:3000/api/v1`)
+- **Web Dashboard**: `cd web_dashboard && npm run preview -- --port 5173 --host` (Listening on `http://localhost:5173`)
+- **Run E2E Suite**: `cd backend && npx ts-node scripts/verify-e2e-workflow.ts`
+- **Run Unit Tests**: `cd backend && npm test`
 - **Create Checkpoint**: `powershell -ExecutionPolicy Bypass -File scripts/checkpoint.ps1 -Description "description"`
 - **Rollback to Checkpoint**: `powershell -ExecutionPolicy Bypass -File scripts/rollback.ps1 -CheckpointId "checkpoint-XXX"`

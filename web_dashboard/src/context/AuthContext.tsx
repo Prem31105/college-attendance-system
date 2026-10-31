@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           userData = data.user;
           token = data.accessToken;
         } else {
-          throw new Error('API Login Failed');
+          return false;
         }
       } catch (e) {
         // Dev Fallback for mock preview when backend is not actively running

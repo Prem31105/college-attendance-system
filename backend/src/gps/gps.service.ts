@@ -67,14 +67,13 @@ export class GpsService {
       };
     }
 
-    // 4. Check geofence boundary (with 5-meter tolerance for edge variance)
-    const effectiveRadius = geofenceRadiusMeters + 5;
-    if (distanceMeters > effectiveRadius) {
+    // 4. Check geofence boundary (strict 75m default)
+    if (distanceMeters > geofenceRadiusMeters) {
       return {
         isValid: false,
         distanceMeters,
         accuracyMeters: studentAccuracy,
-        isSuspicious: distanceMeters >= 300, // Scanning from > 300m away is suspicious
+        isSuspicious: distanceMeters > geofenceRadiusMeters * 2, // Attempts from > 150m (2x radius) are flagged suspicious proxy attempts
         reasonCode: 'OUT_OF_GEOFENCE_RADIUS',
       };
     }

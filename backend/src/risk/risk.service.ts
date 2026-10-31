@@ -79,19 +79,28 @@ export class RiskService {
     // Clamp score to [0.0, 1.0]
     riskScore = Math.min(1.0, Math.max(0.0, Math.round(riskScore * 100) / 100));
 
-    // Decision Logic
+    // Decision Logic: Enforce strict 75m geofence and 20m accuracy requirements
     let status: AttendanceStatus;
     let primaryReason = 'ALL_VERIFICATION_CHECKS_PASSED';
 
-    if (!factors.qrValid || !factors.deviceSignatureValid || factors.distanceMeters > 150) {
+    if (!factors.qrValid) {
       status = AttendanceStatus.REJECTED;
-      primaryReason = reasons.join('; ') || 'CRITICAL_SECURITY_CHECK_FAILED';
-    } else if (factors.isMockLocation || riskScore >= 0.6) {
+      primaryReason = factors.qrExpired ? 'QR_EXPIRED' : 'QR_INVALID_SIGNATURE';
+    } else if (!factors.deviceSignatureValid) {
+      status = AttendanceStatus.REJECTED;
+      primaryReason = 'DEVICE_CRYPTO_SIGNATURE_FAILED';
+    } else if (factors.isMockLocation) {
       status = AttendanceStatus.SUSPICIOUS;
-      primaryReason = reasons.join('; ') || 'ELEVATED_RISK_DETECTED';
-    } else if (riskScore > 0.15 || !factors.gpsValid) {
+      primaryReason = 'GPS_MOCK_LOCATION_ACTIVE';
+    } else if (factors.distanceMeters > 75) {
+      status = AttendanceStatus.REJECTED;
+      primaryReason = `OUT_OF_GEOFENCE_RADIUS (${Math.round(factors.distanceMeters)}m > 75m boundary)`;
+    } else if (factors.gpsAccuracy > 20) {
+      status = AttendanceStatus.REJECTED;
+      primaryReason = `GPS_ACCURACY_TOO_POOR_RETRY (±${Math.round(factors.gpsAccuracy)}m exceeds 20m limit)`;
+    } else if (!factors.integrityPassed) {
       status = AttendanceStatus.PENDING;
-      primaryReason = reasons.join('; ') || 'MANUAL_REVIEW_PENDING';
+      primaryReason = 'DEVICE_INTEGRITY_VERIFICATION_PENDING';
     } else {
       status = AttendanceStatus.VERIFIED;
     }

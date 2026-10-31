@@ -8,6 +8,8 @@ import 'profile_screen.dart';
 import 'settings_screen.dart';
 import 'device_info_screen.dart';
 import 'attendance_correction_screen.dart';
+import 'gps_status_screen.dart';
+import 'subject_statistics_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -77,7 +79,7 @@ class DashboardScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: const LinearGradient(colors: [Color(0xFF1E3A8A), Color(0xFF0F172A)]),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.parseBorder('1px solid #3B82F6'),
+                border: Border.all(color: const Color(0xFF3B82F6), width: 1),
               ),
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -117,12 +119,14 @@ class DashboardScreen extends StatelessWidget {
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 3,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
+              crossAxisCount: 4,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
               children: [
                 _buildActionItem(context, Icons.calendar_today, 'Timetable', const TimetableScreen()),
                 _buildActionItem(context, Icons.book, 'Subjects', const SubjectListScreen()),
+                _buildActionItem(context, Icons.bar_chart, 'Stats', const SubjectStatisticsScreen()),
+                _buildActionItem(context, Icons.my_location, 'GPS Check', const GpsStatusScreen()),
                 _buildActionItem(context, Icons.history, 'History', const AttendanceHistoryScreen()),
                 _buildActionItem(context, Icons.phonelink_lock, 'Device', const DeviceInfoScreen()),
                 _buildActionItem(context, Icons.edit_note, 'Correction', const AttendanceCorrectionScreen()),

@@ -198,6 +198,7 @@ export class AttendanceService {
 
     const session = await this.prisma.attendanceSession.findUnique({
       where: { id: dto.sessionId },
+      include: { teacher: true },
     });
 
     if (!session || session.teacherId !== teacherId) {
@@ -235,7 +236,7 @@ export class AttendanceService {
         action: 'MANUAL_ATTENDANCE_OVERRIDE',
         entityName: 'AttendanceRecord',
         entityId: record.id,
-        actorId: teacherId,
+        actorId: session.teacher.userId,
         newValue: JSON.stringify({ status: dto.status, reason: dto.mandatoryReason }),
       },
     });

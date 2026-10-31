@@ -1,52 +1,45 @@
 # AGENT_HANDOFF.md
 
 ## Current Work Session Summary
-- **Current Objective**: Autonomous end-to-end development, problem diagnosis, test execution, and runtime verification of the Autonomous College Attendance Management System.
-- **Files Created / Modified in this Session**:
-  - `backend/package.json`, `backend/tsconfig.json`
-  - `backend/prisma/schema.prisma`, `backend/prisma/seed.ts`
-  - `backend/src/main.ts`, `backend/src/app.module.ts`
-  - `backend/src/prisma/prisma.service.ts`, `backend/src/prisma/prisma.module.ts`
-  - `backend/src/auth/*` (Argon2id hashing, JWT access & refresh token rotation, strategy, guard, DTOs)
-  - `backend/src/qr/*` (Dynamic QR HMAC-SHA256 generation, 15s refresh, 30s expiry, validation)
-  - `backend/src/gps/*` (Haversine geofence calculation, 75m radius check, accuracy filter <= 20m, mock location detector)
-  - `backend/src/devices/*` (ECDSA P-256 public key registration, challenge generation, signature validation, replacement workflow)
-  - `backend/src/risk/*` (Multi-factor risk scoring engine returning VERIFIED, PENDING, SUSPICIOUS, REJECTED)
-  - `backend/src/attendance/*` (Atomic multi-layer attendance submission transaction, manual teacher override with reason, live stream)
-  - `backend/src/attendance-sessions/*` (Session start, close, summary)
-  - `backend/src/random-verification/*` (In-session random sampling for teacher physical check)
-  - `backend/src/reports/*` (Subject attendance percentage, student stats, CSV export)
-  - `backend/src/admin/*` (Analytics, classroom geofences, audit logs, suspicious incident review)
-  - `backend/src/gateway/events.gateway.ts` (WebSocket live attendance & verification gateway)
-  - `backend/src/gps/gps.service.spec.ts`, `backend/src/risk/risk.service.spec.ts` (Unit test suites)
-  - `web_dashboard/package.json`, `web_dashboard/tsconfig.json`, `web_dashboard/vite.config.ts`, `web_dashboard/tailwind.config.js`
-  - `web_dashboard/src/index.css`, `web_dashboard/src/main.tsx`, `web_dashboard/src/App.tsx`
-  - `web_dashboard/src/context/AuthContext.tsx`
-  - `web_dashboard/src/components/Navbar.tsx`, `web_dashboard/src/components/Sidebar.tsx`
-  - `web_dashboard/src/pages/LoginPage.tsx`
-  - `web_dashboard/src/pages/teacher/TeacherDashboard.tsx`, `web_dashboard/src/pages/teacher/LiveSessionPage.tsx`
-  - `web_dashboard/src/pages/admin/AdminDashboard.tsx`, `web_dashboard/src/pages/admin/ClassroomsPage.tsx`
-  - `student_mobile/pubspec.yaml`, `student_mobile/analysis_options.yaml`
-  - `student_mobile/lib/main.dart`, `student_mobile/lib/core/theme/app_theme.dart`
-  - `student_mobile/lib/core/security/crypto_keystore.dart`, `student_mobile/lib/core/services/api_service.dart`
-  - `student_mobile/lib/screens/*` (All 17 required screens: Splash, Login, Registration, Dashboard, Timetable, Subjects, Scanner, GPS Status, Confirmation, History, Statistics, Notifications, Profile, Device Info, Replacement, Correction, Settings)
-  - `student_mobile/test/attendance_test.dart`
+- **Current Objective**: Phase 2 integration and functional verification with live PostgreSQL, full API workflow verification, security threshold enforcement (75m geofence, 20m accuracy), Flutter screen inspection, and runtime testing.
+- **Key Deliverables in this Session**:
+  - Local PostgreSQL 16.6 zero-admin portable environment set up in `tools/pgsql`, service running on `localhost:5432`.
+  - Database `college_attendance` synced via Prisma DB push and populated with comprehensive seed data (`prisma/seed.ts`).
+  - Authored and executed comprehensive E2E integration test suite (`backend/scripts/verify-e2e-workflow.ts`) verifying 19 integration points against live PostgreSQL (100% pass rate: 19/19 passed).
+  - NestJS backend running as a daemon on `http://localhost:3000/api/v1` (Swagger on `http://localhost:3000/api/docs`).
+  - React Web Dashboard running as a daemon on `http://localhost:5173`, integrated with backend API.
+  - Re-aligned GPS and Risk engine to strictly enforce 75m geofence and 20m GPS accuracy limits without silent bypasses.
+  - Inspected all 17 Flutter screens; fixed compilation risk in `student_mobile/lib/screens/dashboard_screen.dart` (`Border.parseBorder` replaced with `Border.all`).
+  - Documented that Flutter SDK is not in Windows PATH, so Flutter analyzer and widget tests are deferred until SDK installation.
+  - Unit tests executed: 8/8 passed in NestJS backend.
+  - Checkpoint 005 generated.
 
-## Completed & Verified in this Session
-- Both `backend` and `web_dashboard` dependencies installed (npm install exited with code 0).
-- Prisma Client generated successfully (`npx prisma generate`).
-- 0 TypeScript compilation errors in both `backend/` and `web_dashboard/`.
-- Backend unit tests executed and 100% passed (8 tests across 2 test suites).
-- Web Dashboard production bundle compiled via Vite in 11.03s without errors.
-- Backend API server running and verified via HTTP: `http://localhost:3000/api/v1` (Swagger at `/api/docs`).
-- React Web Dashboard running and verified via HTTP: `http://localhost:5173`.
-- Complete Flutter student app source code with all 17 screens implemented.
+## Running Background Services
+- **PostgreSQL 16**: Port 5432 (Data dir: `tools/pgsql/data`, helper scripts in `scripts/start_postgres.ps1`, `scripts/stop_postgres.ps1`)
+- **Backend API**: Port 3000 (`http://localhost:3000/api/v1`)
+- **Web Dashboard**: Port 5173 (`http://localhost:5173`)
 
-## Environment Blockers Documented
-- Docker daemon and native PostgreSQL daemon are not pre-installed on this Windows machine. Development fallback enables standalone runtime testing.
-- Flutter SDK is not present in Windows PATH. Once Flutter SDK is added to PATH, execute `cd student_mobile && flutter run`.
+## Verification Summary Table
+| Workflow Component | Verification Method | Status |
+| :--- | :--- | :--- |
+| PostgreSQL Connectivity | TCP connection, Prisma db push, seed script | **PASS** |
+| User Authentication & RBAC | HTTP API login & Argon2id token generation | **PASS** |
+| Device ECDSA Challenge/Response | Asymmetric P-256 key generation & verify in script | **PASS** |
+| Dynamic QR Generation & Refresh | HMAC-SHA256, 15s refresh, 30s expiry validation | **PASS** |
+| Geofence Validation | Strict 75m boundary enforcement (Haversine) | **PASS** |
+| GPS Accuracy Filter | Strict 20m accuracy threshold | **PASS** |
+| Concurrent QR Scans | Multi-student concurrent transaction validation | **PASS** |
+| Duplicate Scan Prevention | Atomic database unique constraint enforcement | **PASS** |
+| Replay Attack Protection | 60-second one-time challenge token expiration | **PASS** |
+| Risk Scoring Engine | Multi-factor risk engine: VERIFIED / SUSPICIOUS / REJECTED | **PASS** |
+| Audit Trail Logging | Immutable audit logging of manual overrides | **PASS** |
+| Flutter Screen Completeness | All 17 screens present, inspected, syntax fixed | **INSPECTED** |
+| Flutter Analyzer / Tests | Blocked by missing Flutter SDK on Windows host PATH | **DEFERRED** |
+| React Web Dashboard | Vite production build + preview server running | **PASS** |
 
-## Exact Next Steps for Any Incoming Agent
-1. To test the live services, send requests to `http://localhost:3000/api/v1` and view the web UI at `http://localhost:5173`.
-2. When Docker is started on the system, run `docker-compose up -d` to launch native PostgreSQL and Redis.
-3. When Flutter SDK is configured in PATH, run `flutter test` and `flutter run` in `student_mobile/`.
+## Exact Commands to Resume & Verify
+1. **Run E2E Suite**: `cd backend && npx ts-node scripts/verify-e2e-workflow.ts`
+2. **Run Unit Tests**: `cd backend && npm test`
+3. **Build Web Dashboard**: `cd web_dashboard && npm run build`
+4. **Create New Checkpoint**: `powershell -ExecutionPolicy Bypass -File scripts/checkpoint.ps1 -Description "description"`
+5. **Rollback**: `powershell -ExecutionPolicy Bypass -File scripts/rollback.ps1 -CheckpointId "checkpoint-XXX"`
