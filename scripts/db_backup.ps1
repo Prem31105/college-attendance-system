@@ -23,9 +23,14 @@ if ([string]::IsNullOrWhiteSpace($BackupName)) {
 
 Write-Host ">>> [DATABASE BACKUP] Initiating database dump to $BackupFile..." -ForegroundColor Cyan
 
-# Check if pg_dump is available directly
-if (Get-Command pg_dump -ErrorAction SilentlyContinue) {
-    pg_dump -U attendance_admin -d college_attendance -F p -f $BackupFile
+$PortablePgDump = "$RepoRoot\tools\pgsql\bin\pg_dump.exe"
+if (Test-Path $PortablePgDump) {
+    $env:PGPASSWORD = "attendance_secure_pass"
+    & $PortablePgDump -h localhost -p 5432 -U attendance_admin -d college_attendance -F p -f $BackupFile
+    Write-Host ">>> [BACKUP SUCCESS] Portable pg_dump saved to $BackupFile" -ForegroundColor Green
+} elseif (Get-Command pg_dump -ErrorAction SilentlyContinue) {
+    $env:PGPASSWORD = "attendance_secure_pass"
+    pg_dump -h localhost -p 5432 -U attendance_admin -d college_attendance -F p -f $BackupFile
     Write-Host ">>> [BACKUP SUCCESS] Native pg_dump saved to $BackupFile" -ForegroundColor Green
 } elseif (Get-Command docker -ErrorAction SilentlyContinue) {
     docker exec -t college_attendance_postgres pg_dump -U attendance_admin -d college_attendance > $BackupFile

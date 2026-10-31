@@ -62,34 +62,20 @@ This document records the chronological development milestones, features impleme
 
 ---
 
-### Phase 3: Hardware Security & Integrity (Completed & Verified)
+### Phase 2 Verification & Baseline Transition (Completed & Verified)
 - **Status**: Completed & Verified
 - **Milestones**:
-  - [x] Device registration and asymmetric ECDSA P-256 key pair challenge-response.
-  - [x] Platform integrity checks (Google Play Integrity & Apple App Attest fallbacks).
-  - [x] Local biometric authentication support in Flutter app.
-  - [x] Multi-factor server-side risk scoring engine (`VERIFIED`, `PENDING`, `SUSPICIOUS`, `REJECTED`).
-
----
-
-### Phase 4: Administration & Verification (Completed & Verified)
-- **Status**: Completed & Verified
-- **Milestones**:
-  - [x] Random physical verification system for active sessions.
-  - [x] Attendance correction request workflow with audit trails.
-  - [x] Comprehensive reporting and data export.
-  - [x] Admin management panels for classrooms and geofences.
-
----
-
-### Phase 5: Quality Assurance & Runtime Verification (Completed & Verified)
-- **Status**: Completed & Verified
-- **Milestones**:
-  - [x] Automated unit test suites (GPS geofencing & Risk engine tests passing 8/8).
-  - [x] Full E2E integration test suite passing 19/19 against live PostgreSQL.
-  - [x] 0 TypeScript compilation errors in backend and web dashboard.
-  - [x] Web dashboard production bundle built cleanly via Vite (`tsc && vite build`).
-  - [x] NestJS backend running and verified via HTTP on `http://localhost:3000/api/v1` (Swagger docs at `/api/docs`).
-  - [x] React Web Dashboard running and verified via HTTP on `http://localhost:5173`.
-  - [x] All 17 required Flutter student mobile app screens inspected; compilation risks (e.g. `Border.parseBorder` replaced with standard `Border.all`) resolved.
-  - [x] Explicit documentation of environment state: Flutter SDK not installed on Windows PATH, test run deferred until installed.
+  - [x] Git repository verified: Commit `962af09`, Tag `checkpoint-005`, branch `main`, 0 remotes, clean working tree.
+  - [x] PostgreSQL database verified live on port 5432 with 25 tables and intact records.
+  - [x] Verified full database backup generated via `scripts/db_backup.ps1` (`backups/verified_phase2_backup_20261031_212123.sql`, 54.9 KB).
+  - [x] Validated backup integrity (full DDL, ENUM definitions, constraints, indexes, and COPY statements for data).
+  - [x] Confirmed `tools/pgsql` binaries are in `.gitignore`.
+  - [x] Established safe Prisma migration baseline `0_init`:
+    - Generated baseline migration SQL via `prisma migrate diff --from-empty`
+    - Marked `0_init` as applied via `prisma migrate resolve --applied 0_init` with 0 data loss
+    - Confirmed `prisma migrate status` reports schema up-to-date
+  - [x] Audited Flutter Windows environment: Windows 11 Home 64-bit, Git 2.52 present, Flutter SDK/JDK/Android SDK missing from PATH.
+  - [x] Authored complete step-by-step setup guide: `docs/FLUTTER_SETUP_GUIDE.md`.
+  - [x] Reran backend unit tests (8/8 passed) and E2E integration test suite (19/19 passed).
+  - [x] Built React web dashboard with Vite (0 errors).
+  - [x] Checkpoint-006 created.
