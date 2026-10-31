@@ -4,17 +4,17 @@ This document records the chronological development milestones, features impleme
 
 ---
 
-### Phase 0: Project Safety & Recovery Foundation (In Progress)
-- **Status**: Active
+### Phase 0: Project Safety & Recovery Foundation (Completed & Verified)
+- **Status**: Completed & Verified
 - **Milestones**:
   - [x] Environment inspection: Windows, Git 2.52, Node v25.1.0, npm 11.6.2.
   - [x] Git repository initialization on `main` branch.
   - [x] Comprehensive `.gitignore` configuration protecting secrets and build artifacts.
   - [x] Architecture, Database Schema, Security, and Testing documentation established.
   - [x] AI agent state and handoff documents (`PROJECT_STATE.md`, `AGENT_HANDOFF.md`, `RESUME_PROJECT_PROMPT.md`) created.
-  - [x] One-command PowerShell and Bash checkpoint & rollback scripts authored.
-  - [ ] Recovery verification test executed and validated.
-  - [ ] Baseline Checkpoint 001 recorded.
+  - [x] One-command PowerShell and Bash checkpoint & rollback scripts authored (`checkpoint.ps1`, `rollback.ps1`, `checkpoint.sh`, `rollback.sh`).
+  - [x] Recovery verification test executed and validated (test checkpoint-002 rolled back to checkpoint-001 safely).
+  - [x] Baseline Checkpoints 001 and 002 recorded with metadata.
 
 ---
 
@@ -62,3 +62,7 @@ This document records the chronological development milestones, features impleme
 - [ ] Production Dockerfile and docker-compose.yml configurations.
 - [ ] Production build tests for backend and web dashboard.
 - [ ] Complete deployment and disaster recovery guide.
+
+> [!WARNING]
+> Rollback executed on 2026-11-01 02:02:37 UTC to checkpoint-001 (36b5684a4f9e31405649ae709d7a22bc312964cf).
+

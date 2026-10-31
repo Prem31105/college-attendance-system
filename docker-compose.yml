@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: college_attendance_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: attendance_admin
+      POSTGRES_PASSWORD: attendance_secure_pass
+      POSTGRES_DB: college_attendance
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U attendance_admin -d college_attendance']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: college_attendance_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: college_attendance_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://attendance_admin:attendance_secure_pass@postgres:5432/college_attendance?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_ACCESS_SECRET: dev_jwt_access_secret_for_docker_testing_only_change_in_prod_64char_string
+      JWT_REFRESH_SECRET: dev_jwt_refresh_secret_for_docker_testing_only_change_in_prod_64char_string
+      QR_HMAC_SECRET: dev_qr_hmac_secret_for_docker_testing_only_change_in_prod_64char_string
+      QR_REFRESH_INTERVAL_SECONDS: 15
+      QR_TOKEN_VALIDITY_SECONDS: 30
+      DEFAULT_GEOFENCE_RADIUS_METERS: 75
+      MAX_ACCEPTED_GPS_ACCURACY_METERS: 20
+
+  web_dashboard:
+    build:
+      context: ./web_dashboard
+      dockerfile: Dockerfile
+    container_name: college_attendance_web
+    restart: unless-stopped
+    ports:
+      - '5173:5173'
+    environment:
+      VITE_API_BASE_URL: http://localhost:3000/api/v1
+      VITE_WS_BASE_URL: ws://localhost:3000
+
+volumes:
+  pgdata:
+  redisdata:
