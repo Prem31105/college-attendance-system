@@ -1,0 +1,62 @@
+# Environment and Secrets (CRITICAL: Never commit secrets)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.key
+*.pem
+*.keystore
+*.jks
+credentials.json
+google-services.json
+GoogleService-Info.plist
+!*.example
+
+# Node / NestJS / React
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Flutter / Dart
+.dart_tool/
+.packages
+student_mobile/build/
+student_mobile/.flutter-plugins
+student_mobile/.flutter-plugins-dependencies
+student_mobile/android/.gradle/
+student_mobile/android/local.properties
+student_mobile/ios/Flutter/Generated.xcconfig
+student_mobile/ios/Flutter/app.framework
+student_mobile/ios/Pods/
+student_mobile/ios/.symlinks/
+
+# IDE / Editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS Metadata
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary Database Backups & Dumps
+backups/*.dump
+backups/*.sql
+!backups/.gitkeep
+snapshots/temp/
+
+# Log files
+logs/
+*.log
