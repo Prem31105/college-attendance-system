@@ -10,3 +10,4 @@
 | checkpoint-005 | 2026-10-31T21:17:06Z | main | 962af094b4c1e0f376cf254ac194f44f5b8ba399 | Current | VERIFIED | Phase 2 Complete: PostgreSQL verified, E2E workflow passed, all 17 Flutter screens created |
 | checkpoint-006 | 2026-10-31T21:25:23Z | main | 5b7263c0ef895119115181b5d9de065245363a18 | Current | VERIFIED | Task 1-5 Complete: Git verified, PostgreSQL backed up, Prisma baselined, Flutter guide created |
 | checkpoint-007 | 2026-11-01T19:38:01Z | main | cd189ae359bcde59176980aee4556c3216e3f0c6 | Current | VERIFIED | Phase 2.2 Complete: Multi-role Auth, Onboarding, Registration, Token Rotation & Device Binding |
+| checkpoint-008 | 2026-11-01T21:25:58Z | main | 1bb55ddb396146068f6bb2ec25f2730650e65b2c | Current | VERIFIED | Phase 2.3 Complete: Role-Based Notifications, Priority Alerts & WebSocket Center |
