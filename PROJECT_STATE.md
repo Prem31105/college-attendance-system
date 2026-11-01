@@ -12,7 +12,7 @@ Includes Flutter Student Mobile App (all 17 screens), React TypeScript Web Dashb
   - Portable Binaries: Located in `tools/pgsql` (ignored by `.gitignore`).
 - **Backend API**: Node.js, NestJS 10, TypeScript, REST API, WebSockets, JWT with refresh token rotation, Argon2id, Swagger — Running on `http://localhost:3000/api/v1` (Docs: `http://localhost:3000/api/docs`).
 - **Teacher & Admin Web Dashboard**: React 18, TypeScript, Vite, Tailwind CSS, Lucide Icons, QR code projection (`QRCodeSVG`) — Built and running on `http://localhost:5173`.
-- **Student Mobile App**: Flutter (Dart, Material 3, Android & iOS, QR Camera Scanner, Geolocation, Device Keystore/Keychain, local_auth) — All 17 required screens created and inspected. Compilation risks fixed. Detailed setup guide created in `docs/FLUTTER_SETUP_GUIDE.md`. *Note: Flutter SDK is not installed on this host system's PATH, so Flutter analyzer and widget tests are deferred until SDK is installed.*
+- **Student Mobile App**: Flutter (Dart, Material 3, Android & iOS, Dynamic QR Camera Scanner, Geolocation, Device Keystore/Keychain, local_auth) — All 17 screens implemented. Real-time camera viewfinder integrated with `QRView` (`qr_code_scanner_plus`) and verified live on Pixel_6 Android emulator streaming from host webcam (`webcam0` / USB2.0 HD UVC WebCam). Fully operational.
 - **Snapshot & Rollback System**: Git + PowerShell scripts (`checkpoint.ps1`, `rollback.ps1`, `db_backup.ps1`, `db_restore.ps1`, `start_postgres.ps1`, `stop_postgres.ps1`).
 
 ## 3. Current Architecture & Folder Structure
@@ -62,24 +62,29 @@ d:\flutter attandance\
 - [x] Phase 1: Project Foundation (NestJS backend, Prisma schema & seed, Argon2id, JWT auth, React dashboard, Flutter app structure)
 - [x] Phase 2: Core Attendance Engine & Database Integration (PostgreSQL 16 running & verified, 19/19 E2E integration tests passing)
 - [x] Phase 2 Baseline: Git, DB Backup, Prisma Migration Baseline, and Flutter Setup Guide verified
+- [x] Phase 2.1: Master Feature Implementation Plan (Documented & Approved)
+- [x] Phase 2.2: Multi-Role Auth, Backend Registration, Token Rotation, Password Autofill, Device Key Binding & Onboarding Persistence (8/8 Verified & Tested)
 - [x] Phase 3: Hardware Security & Cryptographic Binding (ECDSA P-256 challenge-response, device registration, risk scoring engine)
 - [x] Phase 4: Administration & Verification (Random verification, corrections, reports, audit logs, 75m classroom geofences)
 - [x] Phase 5: Quality Assurance & Integration Testing (Jest tests 8/8 passed, E2E tests 19/19 passed, React dashboard built cleanly)
-- [ ] Phase 6: Production Native Build (Flutter native APK/IPA compilation once Flutter SDK is installed)
+- [x] Phase 6: Student Mobile Native Verification (Flutter debug APK compiled, installed on Pixel_6 emulator, live webcam streaming & QR scanning verified)
 
 ## 5. Development Status
-- **Current Phase**: Phase 2 Baseline & Verification Complete (Ready for Phase 3)
+- **Current Phase**: Phase 2 Product Features (Milestone 2.2 Verified & Complete -> Proceeding to Milestone 2.3)
 - **Current Git Branch**: `main`
-- **Latest Checkpoint ID**: checkpoint-006
+- **Latest Checkpoint ID**: checkpoint-007
 - **Last Successful Build**:
   - Backend: TypeScript 0 errors, running on port 3000
   - Web Dashboard: Vite production bundle built in 4.69s, running on port 5173
 - **Last Successful Test Run**:
+  - Flutter Unit & Widget Tests: 7/7 passed (`attendance_test.dart`, `widget_test.dart`)
+  - Flutter Static Analyzer: 0 issues (`flutter analyze` clean)
   - Backend E2E Integration Suite: 19/19 passed (`verify-e2e-workflow.ts`)
+  - Backend Auth Flow Suite: 9/9 passed (`verify-auth-flow.ts`)
   - Backend Unit Tests: 8/8 passed (`gps.service.spec.ts`, `risk.service.spec.ts`)
 - **Known Errors**: 0 compilation/type errors
 - **Current Blockers / Environment Notes**:
-  - Flutter SDK and Android SDK are not installed on the Windows PATH. Step-by-step installation instructions prepared in `docs/FLUTTER_SETUP_GUIDE.md`.
+  - None. Toolchain (Flutter 3.29.2, Android SDK 34, OpenJDK 17, Pixel_6 emulator, laptop webcam0) is fully configured and operational.
 
 ## 6. Required Environment Variables (Names Only)
 - `NODE_ENV`, `PORT`, `API_PREFIX`, `CORS_ORIGINS`

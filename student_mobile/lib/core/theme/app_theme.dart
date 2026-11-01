@@ -10,12 +10,12 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.dark,
     scaffoldBackgroundColor: darkBg,
-    colorScheme: ColorScheme.dark(
+    colorScheme: const ColorScheme.dark(
       primary: primaryGreen,
       onPrimary: Colors.black,
       surface: darkSurface,
       onSurface: Colors.white,
-      secondary: const Color(0xFF38BDF8),
+      secondary: Color(0xFF38BDF8),
     ),
     appBarTheme: const AppBarTheme(
       backgroundColor: darkBg,

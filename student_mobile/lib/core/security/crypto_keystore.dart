@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:pointycastle/export.dart' as pc;
 
 class CryptoKeystore {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
@@ -15,7 +14,7 @@ class CryptoKeystore {
     }
 
     // Generate new mock PEM public key for primary hardware device registration
-    final demoPem = '''-----BEGIN PUBLIC KEY-----
+    const demoPem = '''-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7p9r7E+k9hVb3W3Wd2WJ2+cI0q2a
 b9/W4D0+zDq+Y4lU5K6tM3v7wO7N3nZ5G1h9j3K8l7k5h7b4k2m9l4a7wQ==
 -----END PUBLIC KEY-----''';

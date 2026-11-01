@@ -6,9 +6,9 @@ class AttendanceHistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final history = [
-      {'subject': 'CS601: Distributed Systems', 'date': 'Today, 10:14 AM', 'status': 'VERIFIED', 'dist': '14.2m', 'color': Color(0xFF22C55E)},
-      {'subject': 'CS602: Cryptography', 'date': 'Yesterday, 02:05 PM', 'status': 'VERIFIED', 'dist': '21.0m', 'color': Color(0xFF22C55E)},
-      {'subject': 'CS603: Mobile App Dev', 'date': '29 Oct 2026, 09:12 AM', 'status': 'VERIFIED', 'dist': '8.5m', 'color': Color(0xFF22C55E)},
+      {'subject': 'CS601: Distributed Systems', 'date': 'Today, 10:14 AM', 'status': 'VERIFIED', 'dist': '14.2m', 'color': const Color(0xFF22C55E)},
+      {'subject': 'CS602: Cryptography', 'date': 'Yesterday, 02:05 PM', 'status': 'VERIFIED', 'dist': '21.0m', 'color': const Color(0xFF22C55E)},
+      {'subject': 'CS603: Mobile App Dev', 'date': '29 Oct 2026, 09:12 AM', 'status': 'VERIFIED', 'dist': '8.5m', 'color': const Color(0xFF22C55E)},
     ];
 
     return Scaffold(
@@ -36,9 +36,9 @@ class AttendanceHistoryScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: (h['color'] as Color).withOpacity(0.1),
+                      color: (h['color'] as Color).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: (h['color'] as Color).withOpacity(0.3)),
+                      border: Border.all(color: (h['color'] as Color).withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       h['status'] as String,

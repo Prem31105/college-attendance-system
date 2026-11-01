@@ -23,11 +23,11 @@ class ProfileScreen extends StatelessWidget {
             const Text('John Doe', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
             const Text('john.doe@college.edu', style: TextStyle(fontSize: 13, color: Colors.grey)),
             const SizedBox(height: 24),
-            Card(
+            const Card(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(16.0),
                 child: Column(
-                  children: const [
+                  children: [
                     _ProfileRow('Roll Number', 'CS2026-001'),
                     Divider(height: 20),
                     _ProfileRow('Registration No', 'REG-9901'),
@@ -53,7 +53,7 @@ class ProfileScreen extends StatelessWidget {
               icon: const Icon(Icons.logout, color: Colors.redAccent),
               label: const Text('Sign Out', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.withOpacity(0.1),
+                backgroundColor: Colors.red.withValues(alpha: 0.1),
                 side: const BorderSide(color: Colors.redAccent, width: 1),
                 minimumSize: const Size.fromHeight(50),
               ),

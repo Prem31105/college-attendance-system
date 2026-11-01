@@ -31,9 +31,9 @@ class TimetableScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF22C55E).withOpacity(0.1),
+                          color: const Color(0xFF22C55E).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFF22C55E).withOpacity(0.3)),
+                          border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.3)),
                         ),
                         child: Text(item['code']!, style: const TextStyle(color: Color(0xFF22C55E), fontWeight: FontWeight.bold, fontSize: 11)),
                       ),

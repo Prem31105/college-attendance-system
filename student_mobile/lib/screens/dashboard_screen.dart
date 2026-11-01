@@ -36,21 +36,21 @@ class DashboardScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Overall Attendance Card
-            Card(
+            const Card(
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Overall Attendance', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                        const SizedBox(height: 4),
-                        const Text('88.4%', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF22C55E))),
-                        const SizedBox(height: 4),
+                        Text('Overall Attendance', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                        SizedBox(height: 4),
+                        Text('88.4%', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF22C55E))),
+                        SizedBox(height: 4),
                         Row(
-                          children: const [
+                          children: [
                             Icon(Icons.check_circle, size: 14, color: Color(0xFF22C55E)),
                             SizedBox(width: 4),
                             Text('Above 75% Requirement', style: TextStyle(color: Colors.grey, fontSize: 12)),
@@ -58,7 +58,7 @@ class DashboardScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(
+                    SizedBox(
                       height: 70,
                       width: 70,
                       child: CircularProgressIndicator(
@@ -85,8 +85,8 @@ class DashboardScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: const [
+                  const Row(
+                    children: [
                       Icon(Icons.radio_button_checked, color: Color(0xFF38BDF8), size: 16),
                       SizedBox(width: 6),
                       Text('ACTIVE ATTENDANCE SESSION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF38BDF8))),

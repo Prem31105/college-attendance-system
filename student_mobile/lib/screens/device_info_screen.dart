@@ -28,11 +28,11 @@ class DeviceInfoScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Card(
+            const Card(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(16.0),
                 child: Column(
-                  children: const [
+                  children: [
                     _InfoRow(label: 'Platform Keystore', value: 'Android Keystore HW'),
                     Divider(height: 20),
                     _InfoRow(label: 'Cryptographic Algorithm', value: 'ECDSA P-256 with SHA-256'),

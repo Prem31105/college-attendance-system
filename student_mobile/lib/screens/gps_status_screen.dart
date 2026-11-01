@@ -9,10 +9,10 @@ class GpsStatusScreen extends StatefulWidget {
 
 class _GpsStatusScreenState extends State<GpsStatusScreen> {
   bool _testing = false;
-  double _latitude = 12.9718000;
-  double _longitude = 77.5945627;
+  final double _latitude = 12.9718000;
+  final double _longitude = 77.5945627;
   double _accuracy = 8.5; // in meters
-  bool _isMockLocation = false;
+  final bool _isMockLocation = false;
   double _distanceToClassroom = 14.2; // in meters
   final double _geofenceLimit = 75.0; // in meters
 

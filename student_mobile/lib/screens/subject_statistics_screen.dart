@@ -61,10 +61,10 @@ class SubjectStatisticsScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: isWarning
-                              ? Colors.redAccent.withOpacity(0.15)
+                              ? Colors.redAccent.withValues(alpha: 0.15)
                               : isBorderline
-                                  ? Colors.amber.withOpacity(0.15)
-                                  : const Color(0xFF22C55E).withOpacity(0.15),
+                                  ? Colors.amber.withValues(alpha: 0.15)
+                                  : const Color(0xFF22C55E).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(

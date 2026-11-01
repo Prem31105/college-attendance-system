@@ -79,3 +79,102 @@ This document records the chronological development milestones, features impleme
   - [x] Reran backend unit tests (8/8 passed) and E2E integration test suite (19/19 passed).
   - [x] Built React web dashboard with Vite (0 errors).
   - [x] Checkpoint-006 created.
+
+
+---
+
+### Phase 6: Student Mobile Native Verification & Live Camera Integration (Completed & Verified)
+- **Status**: Completed & Verified
+- **Milestones**:
+  - [x] Host environment audit: Flutter 3.29.2 (`D:\src\flutter`), Android SDK 34 (`D:\src\AndroidSdk`), OpenJDK 17 (`D:\src\jdk-17`), Android Studio (`D:\src\AndroidStudio`).
+  - [x] Android emulator Pixel_6 configured with persistent `hw.camera.back=webcam0` in `D:\AndroidAVD\Pixel_6.avd\config.ini`.
+  - [x] Host webcam (`USB2.0 HD UVC WebCam` as `webcam0`) bound to emulator rear camera HAL (1280x960 NV12).
+  - [x] Root Cause Diagnosed: Previous `attendance_scanner_screen.dart` was a placeholder stub rendering a static black `Container` with an icon; no camera widget or controller was initialized.
+  - [x] Implemented real-time camera viewfinder in `attendance_scanner_screen.dart` using `QRView` (`qr_code_scanner_plus`), including live barcode stream parsing, JSON payload decoding (`sid`, `sub`), cryptographic Keystore signing, overlay framing, camera flip action, and clean controller disposal.
+  - [x] Verified static analysis: `flutter analyze` completed with 0 errors / 0 warnings.
+  - [x] Verified unit & widget tests: `flutter test` passed 3/3 tests cleanly.
+  - [x] Built fresh debug APK via Gradle `assembleDebug` in 88.0s (`build/app/outputs/flutter-apk/app-debug.apk`).
+  - [x] Streamed APK install to `Pixel_6` emulator via ADB (Success).
+  - [x] Live runtime verification: Login -> Student Dashboard -> Dynamic QR Scanner.
+  - [x] Live webcam video stream verified actively rendering user's physical camera feed in viewfinder.
+  - [x] Live QR detection, simulation, keystore challenge-signing, and transition to "Attendance VERIFIED" confirmation screen verified.
+  - [x] Camera lifecycle verified: camera stream cleanly closed on exit and re-initialized on reentry with 0 errors in Android logcat.
+
+
+---
+
+### Phase 2: Product Features Implementation — Milestones 2.1 & 2.2 (Completed & Verified)
+- **Status**: Completed & Verified
+- **Milestones**:
+  - [x] Master Feature Implementation Plan authored in `docs/FEATURE_IMPLEMENTATION_PLAN.md` covering all 9 required capabilities.
+  - [x] Security Utilities & Validators (`student_mobile/lib/core/security/security_utils.dart`):
+    - Institutional email validation strictly enforcing `@college.edu` domain.
+    - Roll number format validation (`^[A-Z]{2,4}[0-9]{4}-[0-9]{3,4}$`, e.g. `CS2026-001`).
+    - Registration number numeric length validation.
+    - Cryptographic strong password generator (`PasswordGenerator.generateStrongPassword(length: 16)`).
+    - Real-time password strength evaluator (`Weak`, `Fair`, `Good`, `Strong`).
+    - Encrypted token and session storage abstraction (`TokenManager` using `FlutterSecureStorage`).
+  - [x] 3-Slide Onboarding Carousel (`student_mobile/lib/screens/onboarding_screen.dart`):
+    - Slide 1: Dynamic Anti-Proxy QR Codes (15s HMAC-SHA256 tokens).
+    - Slide 2: 75m Classroom Geofence & Sub-20m accuracy check.
+    - Slide 3: Hardware-Bound Keystore Key (ECDSA P-256).
+    - Animated dot indicators, skip navigation, and "Get Started" persistence.
+  - [x] Multi-Role Campus Portal Sign-In (`student_mobile/lib/screens/login_screen.dart`):
+    - Role selector tabs for Student, Teacher, and Admin roles.
+    - Institutional email formatting validation.
+    - Password visibility toggle.
+    - Secure JWT token generation and storage via `TokenManager`.
+  - [x] Account & Device Activation (`student_mobile/lib/screens/registration_screen.dart`):
+    - One-click "Generate Strong Password & Copy" button with clipboard integration.
+    - Live visual password strength progress bar and character counter.
+    - Device hardware key binding via `CryptoKeystore.getOrCreatePublicKeyPem()`.
+    - Confirmation alert dialog and return-to-login workflow.
+  - [x] Unit & Widget Test Suite Expansion:
+    - 4 new test suites added in `attendance_test.dart` and `widget_test.dart`.
+    - 7/7 tests passing (`flutter test` 100% green).
+  - [x] Static Analysis: `flutter analyze` 0 warnings, 0 errors.
+  - [x] Fresh APK build (`assembleDebug`) in 30.7s and streamed installation to running `Pixel_6` emulator.
+  - [x] Live UI verification on emulator: Role switching, password generation, clipboard copy, device binding dialog, and dashboard authentication verified with zero runtime exceptions.
+
+---
+
+### Phase 2.2 Verification & Gap Analysis Audit (Completed & Verified)
+- **Status**: Completed & Verified
+- **8-Dimension Verification & Gap Analysis**:
+  1. *Session timeout, auto-logout, access-token expiry & refresh-token rotation*:
+     - Backend: 15m access token expiry, unique `jti` cryptographic nonce per token generation avoiding tokenHash collisions, atomic refresh rotation, token reuse detection with immediate revocation of compromised user sessions.
+     - Frontend: `SessionInactivityWatcher` auto-logout timer, `ApiService` automatic 401 interception with transparent refresh token rotation and retry.
+     - Classification: **Implemented and tested**.
+  2. *Backend-enforced Student, Teacher, and Admin role-based authentication*:
+     - Backend: `@Roles` decorator with `RolesGuard` and `JwtAuthGuard` enforcing role claims from JWT payload. Verified in integration tests.
+     - Frontend: Role selector tabs for Student, Teacher, Admin in `LoginScreen`.
+     - Classification: **Implemented and tested**.
+  3. *Registration and account activation through backend API*:
+     - Backend: `POST /auth/register` endpoint with `RegisterStudentDto` creating User, Student, and primary `RegisteredDevice` in a single ACID transaction.
+     - Frontend: `RegistrationScreen` wired directly to `ApiService.registerStudent()`.
+     - Classification: **Implemented and tested**.
+  4. *Institutional email, roll number, and registration number validation on frontend & backend*:
+     - Frontend: `CredentialValidator` enforcing `@college.edu`, roll number regex `^[A-Z]{2,4}[0-9]{4}-[0-9]{3,4}$`, and registration number format.
+     - Backend: `RegisterStudentDto` with class-validator `@Matches` decorators enforcing identical institutional rules.
+     - Classification: **Implemented and tested**.
+  5. *Strong password generation, secure storage, and Android password autofill*:
+     - Frontend: `PasswordGenerator.generateStrongPassword(16)` with entropy analysis, live strength indicator, and clipboard copy; wrapped forms in `AutofillGroup` with `AutofillHints.email`, `AutofillHints.password`, `AutofillHints.newPassword`, `AutofillHints.username`.
+     - Classification: **Implemented and tested**.
+  6. *Onboarding completion persistence across app restarts*:
+     - Frontend: 3-slide interactive carousel; completion flag persisted to `FlutterSecureStorage` via `TokenManager.setOnboardingCompleted()`; `SplashScreen` dynamically routes to `OnboardingScreen` on fresh launch, or directly to `LoginScreen` / `DashboardScreen` on restarts.
+     - Classification: **Implemented and tested**.
+  7. *JWT and refresh token encrypted storage, logout cleanup, and session restoration*:
+     - Frontend: `TokenManager` backed by `FlutterSecureStorage`; `SettingsScreen` user session card and confirmed "Log Out" action invoking `ApiService.logout()`, revoking server-side refresh tokens, clearing local keystore session, and navigating back to `LoginScreen`.
+     - Classification: **Implemented and tested**.
+  8. *Device public-key enrollment and backend verification*:
+     - Frontend: Hardware-backed ECDSA P-256 keypair generated via `CryptoKeystore.getOrCreatePublicKeyPem()`; public key PEM sent during registration.
+     - Backend: Public key stored in `RegisteredDevice` table in PostgreSQL; verified on dynamic QR attendance challenge signing.
+     - Classification: **Implemented and tested**.
+- **Automated Verification Suites**:
+  - `flutter analyze`: 0 errors, 0 warnings.
+  - `flutter test`: 7/7 unit & widget tests passed.
+  - Backend unit tests (`jest`): 8/8 passed (`gps.service.spec.ts`, `risk.service.spec.ts`).
+  - Backend Auth Flow suite (`scripts/verify-auth-flow.ts`): 9/9 passed on live PostgreSQL.
+  - Backend E2E suite (`scripts/verify-e2e-workflow.ts`): 19/19 passed on live PostgreSQL.
+  - Android debug APK built via Gradle in 57.2s, installed on Pixel_6 emulator.
+  - Live emulator interaction verified: Onboarding carousel, Registration with strong password autofill, Login, Student Dashboard, Settings with User Session details, and confirmed Logout returning to Login screen.
