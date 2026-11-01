@@ -62,4 +62,43 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(`session_${sessionId}`).emit('random_verification_triggered', challenge);
     }
   }
+
+  @SubscribeMessage('join_user')
+  handleJoinUser(client: Socket, userId: string) {
+    client.join(`user_${userId}`);
+    return { event: 'joined_user', userId };
+  }
+
+  @SubscribeMessage('join_role')
+  handleJoinRole(client: Socket, role: string) {
+    client.join(`role_${role}`);
+    return { event: 'joined_role', role };
+  }
+
+  /**
+   * Broadcasts real-time notification to a specific user
+   */
+  broadcastNotificationToUser(userId: string, notification: any) {
+    if (this.server) {
+      this.server.to(`user_${userId}`).emit('new_notification', notification);
+    }
+  }
+
+  /**
+   * Broadcasts real-time announcement to all users with a specific role
+   */
+  broadcastNotificationToRole(role: string, notification: any) {
+    if (this.server) {
+      this.server.to(`role_${role}`).emit('role_announcement', notification);
+    }
+  }
+
+  /**
+   * Broadcasts global announcement to all connected clients
+   */
+  broadcastGlobalAnnouncement(notification: any) {
+    if (this.server) {
+      this.server.emit('global_announcement', notification);
+    }
+  }
 }

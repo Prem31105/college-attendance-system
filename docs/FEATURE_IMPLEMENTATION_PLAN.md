@@ -41,12 +41,17 @@
    - Inactivity timer tracking user interactions (auto-lock after 15 minutes of inactivity).
    - Clean logout workflow wiping cached tokens and resetting state.
 
-#### Phase 2.3: Role-Based Notifications & Announcements
-1. **In-App Notification Center (`notifications_screen.dart`)**:
-   - Tabs: `All`, `Attendance Alerts`, `College Announcements`.
-   - Notification entities: Title, message, timestamp, priority (`URGENT`, `HIGH`, `NORMAL`), read/unread indicator.
+#### Phase 2.3: Role-Based Notifications & Announcements (Completed & Verified)
+1. **In-App Notification Center (`notifications_screen.dart` & `notification_detail_screen.dart`)**:
+   - Filter chips: `All`, `Urgent Only`, `Attendance Alerts`, `Announcements`.
+   - Notification entities: Title, message, timestamp, priority (`URGENT`, `NORMAL`, `INFORMATIONAL`), read/unread indicator.
    - Filter and "Mark all as read" capabilities.
-   - Dynamic unread badge counter displayed on the AppBar and Dashboard.
+   - Dynamic live unread badge counter displayed on Dashboard AppBar.
+   - High-contrast urgent notification banner on Dashboard for unread urgent alerts.
+   - Dedicated notification detail screen with automatic mark-as-read.
+   - Backend REST APIs (`GET /notifications`, `GET /notifications/unread-count`, `GET /notifications/:id`, `PATCH /notifications/:id/read`, `POST /notifications/mark-all-read`, `POST /notifications/announce`).
+   - Role-based authorization & priority controls (Students blocked from announcements; Teachers restricted to student roles/sections; Admins allowed global broadcasts; Audit logs for urgent broadcasts).
+   - Real-time WebSocket delivery via `EventsGateway`.
 
 #### Phase 2.4: Location Permissions & Geofencing Radar
 1. **Interactive GPS Geofence Visualizer (`gps_status_screen.dart`)**:

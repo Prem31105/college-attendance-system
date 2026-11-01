@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../core/services/notification_service.dart';
 import 'attendance_scanner_screen.dart';
 import 'timetable_screen.dart';
 import 'subject_list_screen.dart';
 import 'attendance_history_screen.dart';
 import 'notifications_screen.dart';
+import 'notification_detail_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
 import 'device_info_screen.dart';
@@ -11,8 +13,26 @@ import 'attendance_correction_screen.dart';
 import 'gps_status_screen.dart';
 import 'subject_statistics_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    NotificationService().startSync();
+    NotificationService().fetchNotifications();
+  }
+
+  @override
+  void dispose() {
+    NotificationService().stopSync();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +40,51 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('SmartCampus'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+          ValueListenableBuilder<int>(
+            valueListenable: NotificationService().unreadCountNotifier,
+            builder: (context, unreadCount, _) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined),
+                    tooltip: 'Notification Center',
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                      );
+                      NotificationService().refreshUnreadCount();
+                    },
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.redAccent,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          unreadCount > 9 ? '9+' : unreadCount.toString(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.person_outline),
@@ -35,6 +97,76 @@ class DashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Urgent Notification Alert Banner (if unread urgent notification exists)
+            ValueListenableBuilder<List<NotificationItem>>(
+              valueListenable: NotificationService().notificationsNotifier,
+              builder: (context, notifs, _) {
+                final urgentUnread = notifs.where((n) => n.isUrgent && !n.isRead).toList();
+                if (urgentUnread.isEmpty) return const SizedBox.shrink();
+
+                final firstUrgent = urgentUnread.first;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: InkWell(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => NotificationDetailScreen(notification: firstUrgent)),
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.6)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 24),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.redAccent,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text('URGENT', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        firstUrgent.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  firstUrgent.message,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 11, color: Colors.white70),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.redAccent),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
             // Overall Attendance Card
             const Card(
               child: Padding(

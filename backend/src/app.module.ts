@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { EventsGateway } from './gateway/events.gateway';
 import { QrService } from './qr/qr.service';
 import { QrController } from './qr/qr.controller';
@@ -19,7 +20,7 @@ import { AdminService } from './admin/admin.service';
 import { AdminController } from './admin/admin.controller';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, NotificationsModule],
   controllers: [
     AttendanceController,
     AttendanceSessionsController,

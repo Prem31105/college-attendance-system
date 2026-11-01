@@ -178,3 +178,46 @@ This document records the chronological development milestones, features impleme
   - Backend E2E suite (`scripts/verify-e2e-workflow.ts`): 19/19 passed on live PostgreSQL.
   - Android debug APK built via Gradle in 57.2s, installed on Pixel_6 emulator.
   - Live emulator interaction verified: Onboarding carousel, Registration with strong password autofill, Login, Student Dashboard, Settings with User Session details, and confirmed Logout returning to Login screen.
+
+---
+
+### Phase 2.3: Role-Based Notifications & Announcements System (Completed & Verified)
+- **Status**: Completed & Verified
+- **Milestones**:
+  - [x] Backend Schema & Migration:
+    - Added `NotificationPriority` enum (`URGENT`, `NORMAL`, `INFORMATIONAL`).
+    - Added `readAt`, `senderId`, `data` columns to `Notification` table with indexes on `(userId, isRead)`, `(userId, createdAt)`, and `(priority)`.
+    - Synced PostgreSQL schema via Prisma.
+  - [x] Backend REST API & Authorization:
+    - `GET /notifications`: Paginated notification history with unread count and priority/category filtering.
+    - `GET /notifications/unread-count`: Fast unread count for badge rendering.
+    - `GET /notifications/:id`: Notification detail retrieval and automatic read status transition.
+    - `PATCH /notifications/:id/read`: Individual mark-as-read with timestamp.
+    - `POST /notifications/mark-all-read`: Bulk mark-all-as-read.
+    - `POST /notifications/announce`: Strict role-based announcement creation.
+      - Students strictly blocked from creating announcements (HTTP 403 Forbidden).
+      - Teachers permitted to target class sections or `STUDENT` roles with `NORMAL`, `INFORMATIONAL`, or `URGENT` priority; blocked from broadcasting to `ALL`.
+      - Admins permitted to broadcast globally to `ALL` with any priority.
+      - Administrative and urgent broadcasts recorded in `AttendanceAuditLog`.
+      - Deduplication prevention: Idempotent double-submit protection within 30-second window.
+  - [x] Real-Time WebSockets (`EventsGateway`):
+    - Added `broadcastNotificationToUser`, `broadcastNotificationToRole`, and `broadcastGlobalAnnouncement` handlers with Socket.IO rooms (`user_${id}`, `role_${role}`).
+  - [x] Flutter Client Implementation (`student_mobile`):
+    - `NotificationService`: Singleton managing `unreadCountNotifier`, `notificationsNotifier`, and 15s sync timer.
+    - `DashboardScreen`: Live unread notification badge counter on AppBar bell icon, plus high-contrast Urgent Alert Banner at top of dashboard when unread urgent alerts exist.
+    - `NotificationsScreen`: Filter chips (`All`, `Urgent Only`, `Attendance Alerts`, `Announcements`), "Mark all read" top button, read/unread visual styling, priority color pills, and relative timestamps.
+    - `NotificationDetailScreen`: Full view with urgent warning alert, priority and category pills, timestamp, read indicator, and message body.
+  - [x] Automated Test Verification:
+    - Backend Notification Suite (`verify-notifications-flow.ts`): 12/12 tests passed against live PostgreSQL.
+    - Backend Unit Tests (`jest`): 8/8 passed.
+    - Backend E2E Suite (`verify-e2e-workflow.ts`): 19/19 passed.
+    - Flutter static analysis: `flutter analyze` clean (0 errors, 0 warnings).
+    - Flutter unit & widget tests: 11/11 passed (`attendance_test.dart`, `notification_test.dart`, `widget_test.dart`).
+  - [x] Emulator Native Verification on Pixel_6:
+    - Fresh debug APK built in 53.6s and installed via ADB.
+    - Verified live unread badge `3` on Dashboard bell icon.
+    - Verified Urgent Notification Banner rendered on Dashboard.
+    - Verified NotificationsScreen filter chips, list items, priority badges.
+    - Verified opening NotificationDetailScreen automatically marks notification as read.
+    - Verified "Mark all read" button updates all items to read state and clears unread dots.
+    - Verified returning to Dashboard clears the Urgent Banner and resets badge count.
