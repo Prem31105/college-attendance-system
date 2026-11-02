@@ -49,13 +49,13 @@
   ```bash
   cd backend && npm test
   ```
-- **Web Tests**:
+- **Backend E2E Suite**:
   ```bash
-  cd web_dashboard && npm test
+  cd backend && npx ts-node scripts/verify-e2e-workflow.ts
   ```
 - **Flutter Tests & Analyze**:
   ```powershell
-  cd student_mobile && flutter test && flutter analyze
+  $env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; cd student_mobile && flutter test && flutter analyze
   ```
 - **Phase 2.3 Independent Audit Suite**:
   ```powershell

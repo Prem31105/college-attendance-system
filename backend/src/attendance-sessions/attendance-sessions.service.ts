@@ -161,4 +161,10 @@ export class AttendanceSessionsService {
       },
     };
   }
+
+  async getAllClassrooms() {
+    return this.prisma.classroom.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
 }

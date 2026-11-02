@@ -1,0 +1,8 @@
+﻿{
+    "checkpoint_id":  "checkpoint-012",
+    "timestamp_utc":  "2026-11-02T22:02:36Z",
+    "git_commit_hash":  "83c644747f94ecc792ab3b98bad049fb2b1503de",
+    "branch":  "main",
+    "description":  "recovery checkpoint before Phase 2.4: preserved real-time socket_io_client enhancements",
+    "status":  "VERIFIED"
+}

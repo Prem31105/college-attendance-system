@@ -227,3 +227,48 @@ This document records the chronological development milestones, features impleme
     - Verified Defect 2 Fixed: Implemented JWT connection authentication and room-level authorization in `EventsGateway`. Unauthenticated connections rejected with `auth_error`; students strictly prohibited from subscribing to `role_ADMIN` or arbitrary user rooms.
     - Full regression test run: Backend Jest (8/8), Notifications Flow (12/12), Auth Flow (9/9), E2E Integration (19/19), Flutter Tests (11/11), Flutter Analyze (0 issues).
     - Recovery checkpoint created prior to fixes: checkpoint-010. Final Phase 2.3 verified checkpoint created: checkpoint-011.
+
+
+---
+
+### Phase 2.4: Location Permissions & Configurable Geofencing Radar (Completed & Verified)
+- **Status**: Completed & Verified
+- **Milestones**:
+  - [x] Backend Configurable Geofence Anchor Retrieval:
+    - Added `getAllClassrooms()` to `attendance-sessions.service.ts` querying all active classrooms and geofence anchors.
+    - Added `@Get('classrooms/all')` route in `attendance-sessions.controller.ts` secured with `@Roles(Role.TEACHER, Role.ADMIN, Role.STUDENT)`.
+    - Placed before dynamic `:sessionId` route to eliminate routing collisions.
+    - Verified live HTTP 200 response with authenticated student JWT returning Room 401 anchor (`12.9715987, 77.5945627, 75m`).
+  - [x] Flutter Client Location Service (`student_mobile/lib/core/services/location_service.dart`):
+    - `ClassroomGeofence` data model with parsing from JSON and fallback to Room 401 defaults.
+    - `GeofenceEvaluation` data class with distance, accuracy, boundary status, spoofing flags, and risk penalty.
+    - Pure Haversine distance calculator matching backend formula.
+    - Geolocator permission handling: `checkPermission()`, `requestPermission()`, `isLocationServiceEnabled()`, `openAppSettings()`, `openLocationSettings()`.
+    - Real-time position evaluation enforcing:
+      - Strict 75m radius boundary (`OUT_OF_GEOFENCE_RADIUS`).
+      - Accuracy threshold <= 20m (`INSUFFICIENT_ACCURACY`).
+      - Mock location spoofing detection via `position.isMocked` (`MOCK_LOCATION_DETECTED`).
+    - Classroom list fetching via `ApiService.getClassrooms()`.
+  - [x] Interactive Radar Geofence Visualizer (`student_mobile/lib/screens/gps_status_screen.dart`):
+    - Custom animated concentric radar painter (`_RadarPainter`) with animated sweep line, 25m/50m inner range rings, and bold 75m boundary fence.
+    - Classroom anchor pin at radar center with campus building/room label.
+    - Live student device blip positioned dynamically based on relative distance and bearing.
+    - Color-coded visual health (Emerald green inside/accurate, Amber warning for accuracy >20m, Rose red for out-of-boundary or mock spoofing).
+    - Configurable classroom dropdown selector allowing students to inspect geofences across all classrooms.
+    - Real-time metrics grid (Distance, Accuracy, Spoofing status, Latitude/Longitude coordinates).
+    - Permission request banners and app settings deep-linking when location services or permissions are disabled.
+  - [x] Attendance Scanner Integration (`student_mobile/lib/screens/attendance_scanner_screen.dart`):
+    - Top radar chip/badge linking directly to `GpsStatusScreen`.
+    - Real GPS coordinate acquisition and geofence evaluation prior to attendance verification.
+  - [x] Automated Test Verification:
+    - Flutter static analysis: `flutter analyze` completed with 0 errors / 0 warnings.
+    - Flutter unit & widget tests: 21/21 passed (`attendance_test.dart`, `location_service_test.dart`, `notification_test.dart`, `widget_test.dart`).
+    - Backend Unit Tests (`jest`): 8/8 passed (`gps.service.spec.ts`, `risk.service.spec.ts`).
+    - Backend Notification Suite (`verify-notifications-flow.ts`): 12/12 passed against live PostgreSQL.
+    - Backend Auth Flow Suite (`verify-auth-flow.ts`): 9/9 passed.
+    - Backend E2E Suite (`verify-e2e-workflow.ts`): 19/19 passed.
+    - Phase 2.3 Independent Audit Suite (`audit-phase23.ts`): 28/28 passed.
+    - Live REST API verification: Authenticated `GET /sessions/classrooms/all` returned HTTP 200 with classroom fixture.
+  - [x] Checkpoint Created:
+    - Pre-implementation recovery checkpoint: checkpoint-012 (`83c6447`).
+    - Phase 2.4 completion checkpoint: checkpoint-013.

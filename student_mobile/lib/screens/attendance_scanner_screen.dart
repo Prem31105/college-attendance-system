@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'attendance_confirmation_screen.dart';
+import 'gps_status_screen.dart';
 import '../core/security/crypto_keystore.dart';
+import '../core/services/location_service.dart';
 
 class AttendanceScannerScreen extends StatefulWidget {
   const AttendanceScannerScreen({super.key});
@@ -70,11 +72,15 @@ class _AttendanceScannerScreenState extends State<AttendanceScannerScreen> {
       // Fallback to default subject if payload is plain string
     }
 
-    await Future.delayed(const Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
-    setState(() => _stepStatus = '2/4: Obtaining GPS coordinates & accuracy...');
+    setState(() => _stepStatus = '2/4: Verifying GPS geofence boundary & accuracy...');
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    final eval = await LocationService().performEvaluation();
+    if (!mounted) return;
+    setState(() => _stepStatus = '2/4: GPS fix acquired (${eval.distanceMeters.toStringAsFixed(1)}m from ${eval.classroom.name}, ±${eval.accuracyMeters.toStringAsFixed(1)}m)...');
+
+    await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
     setState(() => _stepStatus = '3/4: Signing device-bound Keystore challenge...');
 
@@ -84,7 +90,7 @@ class _AttendanceScannerScreenState extends State<AttendanceScannerScreen> {
     if (!mounted) return;
     setState(() => _stepStatus = '4/4: Submitting evidence to server risk engine...');
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 500));
 
     if (mounted) {
       _controller?.pauseCamera();
@@ -92,11 +98,11 @@ class _AttendanceScannerScreenState extends State<AttendanceScannerScreen> {
         context,
         MaterialPageRoute(
           builder: (_) => AttendanceConfirmationScreen(
-            status: 'VERIFIED',
+            status: eval.isValid ? 'VERIFIED' : 'REJECTED',
             subjectCode: subjectCode,
             subjectName: subjectName,
-            distanceMeters: 14.2,
-            accuracyMeters: 8.5,
+            distanceMeters: eval.distanceMeters,
+            accuracyMeters: eval.accuracyMeters,
           ),
         ),
       );
@@ -153,6 +159,39 @@ class _AttendanceScannerScreenState extends State<AttendanceScannerScreen> {
                       );
                     }
                   },
+                ),
+                Positioned(
+                  top: 16,
+                  child: InkWell(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const GpsStatusScreen()),
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF22C55E)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.radar, color: Color(0xFF22C55E), size: 16),
+                          SizedBox(width: 8),
+                          Text(
+                            'Geofence Radar: Room 401 (75m)',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 if (_processing)
                   Container(

@@ -31,6 +31,12 @@ export class AttendanceSessionsController {
     return this.sessionsService.closeSession(sessionId, teacherId);
   }
 
+  @Get('classrooms/all')
+  @Roles(Role.TEACHER, Role.ADMIN, Role.STUDENT)
+  async getClassrooms() {
+    return this.sessionsService.getAllClassrooms();
+  }
+
   @Get(':sessionId')
   @Roles(Role.TEACHER, Role.ADMIN, Role.STUDENT)
   async getSessionDetails(@Param('sessionId') sessionId: string) {

@@ -13,3 +13,4 @@
 | checkpoint-008 | 2026-11-01T21:25:58Z | main | 1bb55ddb396146068f6bb2ec25f2730650e65b2c | Current | VERIFIED | Phase 2.3 Complete: Role-Based Notifications, Priority Alerts & WebSocket Center |
 | checkpoint-010 | 2026-11-02T21:18:29Z | main | 4da99ccacab73e414a1d48c96b0667354a0e0f3e | Current | VERIFIED | pre-fix audit recovery: documented defects in migrations and websocket gateway |
 | checkpoint-011 | 2026-11-02T21:31:50Z | main | 6cf53bf1cf85655e2e6c534eb2c5a0d5acc7d6b5 | Current | VERIFIED | Phase 2.3 Verified: Fixed Migration Drift and WebSocket JWT Auth and Room Authorization |
+| checkpoint-012 | 2026-11-02T22:02:36Z | main | 83c644747f94ecc792ab3b98bad049fb2b1503de | Current | VERIFIED | recovery checkpoint before Phase 2.4: preserved real-time socket_io_client enhancements |

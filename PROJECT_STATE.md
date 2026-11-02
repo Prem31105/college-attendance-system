@@ -1,4 +1,4 @@
-﻿# PROJECT_STATE.md
+# PROJECT_STATE.md
 
 ## 1. Project Overview
 Autonomous College Attendance Management System featuring Dynamic QR code projection (15s refresh / 30s expiry), GPS geofencing (strict 75m boundary and 20m accuracy requirement), hardware-bound registered device signatures (ECDSA P-256 Keystore/Keychain), optional local biometrics, random teacher physical verification, and a server-side multi-layer risk scoring engine.
@@ -10,51 +10,52 @@ Includes Flutter Student Mobile App (all 17 screens), React TypeScript Web Dashb
   - Prisma Migration Baseline: `0_init` and `20261102_phase23_notification_priority` applied and synced (`prisma migrate status` clean).
   - Verified Backup: `backups/verified_phase2_backup_20261031_212123.sql` (54.9 KB, complete DDL + data COPY statements).
   - Portable Binaries: Located in `tools/pgsql` (ignored by `.gitignore`).
-- **Backend API**: Node.js, NestJS 10, TypeScript, REST API, WebSockets, JWT with refresh token rotation, Argon2id, Swagger Ã¢â‚¬â€ Running on `http://localhost:3000/api/v1` (Docs: `http://localhost:3000/api/docs`).
-- **Teacher & Admin Web Dashboard**: React 18, TypeScript, Vite, Tailwind CSS, Lucide Icons, QR code projection (`QRCodeSVG`) Ã¢â‚¬â€ Built and running on `http://localhost:5173`.
-- **Student Mobile App**: Flutter (Dart, Material 3, Android & iOS, Dynamic QR Camera Scanner, Geolocation, Device Keystore/Keychain, local_auth) Ã¢â‚¬â€ All 17 screens implemented. Real-time camera viewfinder integrated with `QRView` (`qr_code_scanner_plus`) and verified live on Pixel_6 Android emulator streaming from host webcam (`webcam0` / USB2.0 HD UVC WebCam). Fully operational.
+- **Backend API**: Node.js, NestJS 10, TypeScript, REST API, WebSockets, JWT with refresh token rotation, Argon2id, Swagger — Running on `http://localhost:3000/api/v1` (Docs: `http://localhost:3000/api/docs`).
+- **Teacher & Admin Web Dashboard**: React 18, TypeScript, Vite, Tailwind CSS, Lucide Icons, QR code projection (`QRCodeSVG`) — Built and running on `http://localhost:5173`.
+- **Student Mobile App**: Flutter (Dart, Material 3, Android & iOS, Dynamic QR Camera Scanner, Geolocation, Device Keystore/Keychain, local_auth) — All 17 screens implemented. Real-time camera viewfinder integrated with `QRView` (`qr_code_scanner_plus`), interactive animated Radar Geofence visualizer (`GpsStatusScreen`), real-time Haversine distance calculator, and mock location spoofing detection. 21/21 Flutter unit and widget tests passing.
 - **Snapshot & Rollback System**: Git + PowerShell scripts (`checkpoint.ps1`, `rollback.ps1`, `db_backup.ps1`, `db_restore.ps1`, `start_postgres.ps1`, `stop_postgres.ps1`).
 
 ## 3. Current Architecture & Folder Structure
 ```
 d:\flutter attandance\
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ .gitignore
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ .env.example
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ docker-compose.yml
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ README.md
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ PROJECT_STATE.md
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ AGENT_HANDOFF.md
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ DEVELOPMENT_PROGRESS.md
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ RESUME_PROJECT_PROMPT.md
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ backups/            (Verified PostgreSQL SQL dumps)
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ docs/
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ ARCHITECTURE.md
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ DATABASE_SCHEMA.md
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ FLUTTER_SETUP_GUIDE.md (Step-by-step Windows setup guide)
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ SECURITY.md
-Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ TESTING.md
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ snapshots/
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ README.md
-Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ checkpoint-log.md
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ scripts/
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ checkpoint.ps1
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ checkpoint.sh
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ rollback.ps1
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ rollback.sh
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ db_backup.ps1
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ db_restore.ps1
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ setup_local_postgres.ps1
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ start_postgres.ps1
-Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ stop_postgres.ps1
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ backend/            (NestJS API & Prisma ORM - Running on port 3000)
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ prisma/
-Ã¢â€â€š   Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ migrations/0_init/migration.sql (Baseline migration)
-Ã¢â€â€š   Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ schema.prisma
-Ã¢â€â€š   Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ seed.ts
-Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ scripts/verify-e2e-workflow.ts (19/19 E2E Integration tests passed)
-Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ src/
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ web_dashboard/      (React + Vite + Tailwind - Running on port 5173)
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ student_mobile/     (Flutter Material 3 Student Mobile App - 17 screens implemented)
+├── .gitignore
+├── .env.example
+├── docker-compose.yml
+├── README.md
+├── PROJECT_STATE.md
+├── AGENT_HANDOFF.md
+├── DEVELOPMENT_PROGRESS.md
+├── RESUME_PROJECT_PROMPT.md
+├── backups/            (Verified PostgreSQL SQL dumps)
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── DATABASE_SCHEMA.md
+│   ├── FLUTTER_SETUP_GUIDE.md (Step-by-step Windows setup guide)
+│   ├── SECURITY.md
+│   └── TESTING.md
+├── snapshots/
+│   ├── README.md
+│   └── checkpoint-log.md
+├── scripts/
+│   ├── checkpoint.ps1
+│   ├── checkpoint.sh
+│   ├── rollback.ps1
+│   ├── rollback.sh
+│   ├── db_backup.ps1
+│   ├── db_restore.ps1
+│   ├── setup_local_postgres.ps1
+│   ├── start_postgres.ps1
+│   └── stop_postgres.ps1
+├── backend/            (NestJS API & Prisma ORM - Running on port 3000)
+│   ├── prisma/
+│   │   ├── migrations/0_init/migration.sql (Baseline migration)
+│   │   ├── migrations/20261102_phase23_notification_priority/migration.sql
+│   │   ├── schema.prisma
+│   │   └── seed.ts
+│   ├── scripts/verify-e2e-workflow.ts (19/19 E2E Integration tests passed)
+│   └── src/
+├── web_dashboard/      (React + Vite + Tailwind - Running on port 5173)
+└── student_mobile/     (Flutter Material 3 Student Mobile App - 17 screens implemented, 21/21 tests passed)
 ```
 
 ## 4. Feature Status Matrix
@@ -65,29 +66,31 @@ d:\flutter attandance\
 - [x] Phase 2.1: Master Feature Implementation Plan (Documented & Approved)
 - [x] Phase 2.2: Multi-Role Auth, Backend Registration, Token Rotation, Password Autofill, Device Key Binding & Onboarding Persistence (8/8 Verified & Tested)
 - [x] Phase 2.3: Role-Based Notifications & Announcements System (In-App Notification Center, Priority Alerts, Role Broadcasts & Audit Logs - Verified & Tested)
+- [x] Phase 2.4: Location Permissions & Configurable Geofencing Radar (Interactive Animated Radar, Multi-Ring Boundary, Configurable Classroom Anchor Endpoint, Spoofing Detection, 21/21 Tests Passed)
 - [x] Phase 3: Hardware Security & Cryptographic Binding (ECDSA P-256 challenge-response, device registration, risk scoring engine)
 - [x] Phase 4: Administration & Verification (Random verification, corrections, reports, audit logs, 75m classroom geofences)
 - [x] Phase 5: Quality Assurance & Integration Testing (Jest tests 8/8 passed, E2E tests 19/19 passed, React dashboard built cleanly)
 - [x] Phase 6: Student Mobile Native Verification (Flutter debug APK compiled, installed on Pixel_6 emulator, live webcam streaming & QR scanning verified)
 
 ## 5. Development Status
-- **Current Phase**: Phase 2 Product Features (Milestone 2.3 Verified & Complete)
+- **Current Phase**: Phase 2 Product Features (Milestone 2.4 Verified & Complete)
 - **Current Git Branch**: `main`
-- **Latest Checkpoint ID**: checkpoint-011
+- **Latest Checkpoint ID**: checkpoint-013
 - **Last Successful Build**:
   - Backend: TypeScript 0 errors, running on port 3000
   - Web Dashboard: Vite production bundle built in 4.69s, running on port 5173
 - **Last Successful Test Run**:
-  - Flutter Unit & Widget Tests: 11/11 passed (`attendance_test.dart`, `notification_test.dart`, `widget_test.dart`)
+  - Flutter Unit & Widget Tests: 21/21 passed (`attendance_test.dart`, `location_service_test.dart`, `notification_test.dart`, `widget_test.dart`)
   - Flutter Static Analyzer: 0 issues (`flutter analyze` clean)
+  - Backend Unit Tests: 8/8 passed (`gps.service.spec.ts`, `risk.service.spec.ts`)
+  - Backend Classrooms API: HTTP 200 authenticated (`GET /sessions/classrooms/all`)
   - Phase 2.3 Independent Audit Suite: 28/28 passed (`audit-phase23.ts`: Schema, Auth, REST RBAC, Persistence, Dedup, Audit Logs, JWT WebSocket Delivery & Room Authorization)
   - Backend Notification Suite: 12/12 passed (`verify-notifications-flow.ts`)
   - Backend E2E Integration Suite: 19/19 passed (`verify-e2e-workflow.ts`)
   - Backend Auth Flow Suite: 9/9 passed (`verify-auth-flow.ts`)
-  - Backend Unit Tests: 8/8 passed (`gps.service.spec.ts`, `risk.service.spec.ts`)
 - **Known Errors**: 0 compilation/type errors
 - **Current Blockers / Environment Notes**:
-  - None. Toolchain (Flutter 3.29.2, Android SDK 34, OpenJDK 17, Pixel_6 emulator, laptop webcam0) is fully configured and operational.
+  - None. Toolchain (Flutter 3.29.2, Android SDK 34, OpenJDK 17, Pixel_6 emulator, laptop webcam0, local PostgreSQL 16.6) is fully configured and operational.
 
 ## 6. Required Environment Variables (Names Only)
 - `NODE_ENV`, `PORT`, `API_PREFIX`, `CORS_ORIGINS`
@@ -109,8 +112,6 @@ d:\flutter attandance\
 - **Web Dashboard**: `cd web_dashboard && npm run preview -- --port 5173 --host` (Listening on `http://localhost:5173`)
 - **Run E2E Suite**: `cd backend && npx ts-node scripts/verify-e2e-workflow.ts`
 - **Run Unit Tests**: `cd backend && npm test`
+- **Run Flutter Tests**: `$env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; cd student_mobile && flutter test && flutter analyze`
 - **Create Checkpoint**: `powershell -ExecutionPolicy Bypass -File scripts/checkpoint.ps1 -Description "description"`
 - **Rollback to Checkpoint**: `powershell -ExecutionPolicy Bypass -File scripts/rollback.ps1 -CheckpointId "checkpoint-XXX"`
-
-
-
