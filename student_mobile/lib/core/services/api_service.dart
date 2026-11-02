@@ -414,4 +414,24 @@ class ApiService {
       ]
     };
   }
+
+  Future<Map<String, dynamic>> getAttendanceGuider([double targetPercentage = 75.0]) async {
+    try {
+      final token = accessToken ?? await TokenManager.getAccessToken();
+      final res = await http.get(
+        Uri.parse('$baseUrl/reports/guider?target=${targetPercentage.toStringAsFixed(1)}'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 4));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        return {'success': true, 'data': data};
+      }
+    } catch (_) {}
+
+    return {'success': false};
+  }
 }

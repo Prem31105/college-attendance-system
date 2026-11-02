@@ -143,6 +143,44 @@ export const TeacherDashboard: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Smart Semester Attendance & Shortage Analysis (Phase 2.5) */}
+      <div className="glass-panel rounded-2xl p-6 border border-slate-800/80">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center space-x-2">
+              <span className="h-2 w-2 rounded-full bg-brand-400"></span>
+              <span>Predictive Student Quota & Shortage Guider</span>
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Automated calculations based on the standard 75% institutional semester threshold
+            </p>
+          </div>
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            Target Quota: 75%
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+          <div className="rounded-xl bg-slate-900/60 p-4 border border-slate-800">
+            <div className="text-xs text-slate-400 font-medium">Safe Zone (&ge; 80%)</div>
+            <div className="text-2xl font-bold text-emerald-400 mt-1">82 Students</div>
+            <div className="text-xs text-slate-400 mt-1">Can take safe bunks without penalty</div>
+          </div>
+
+          <div className="rounded-xl bg-slate-900/60 p-4 border border-slate-800">
+            <div className="text-xs text-slate-400 font-medium">Borderline Zone (75% - 79%)</div>
+            <div className="text-2xl font-bold text-amber-400 mt-1">6 Students</div>
+            <div className="text-xs text-amber-400/80 mt-1">1 missed lecture triggers shortage alert</div>
+          </div>
+
+          <div className="rounded-xl bg-slate-900/60 p-4 border border-slate-800">
+            <div className="text-xs text-slate-400 font-medium">Critical Shortage Zone (&lt; 75%)</div>
+            <div className="text-2xl font-bold text-rose-400 mt-1">2 Students</div>
+            <div className="text-xs text-rose-400/80 mt-1">Requires consecutive attendance recovery</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -15,3 +15,4 @@
 | checkpoint-011 | 2026-11-02T21:31:50Z | main | 6cf53bf1cf85655e2e6c534eb2c5a0d5acc7d6b5 | Current | VERIFIED | Phase 2.3 Verified: Fixed Migration Drift and WebSocket JWT Auth and Room Authorization |
 | checkpoint-012 | 2026-11-02T22:02:36Z | main | 83c644747f94ecc792ab3b98bad049fb2b1503de | Current | VERIFIED | recovery checkpoint before Phase 2.4: preserved real-time socket_io_client enhancements |
 | checkpoint-014 | 2026-11-02T22:35:07Z | main | 269da04762070e01299ee28fe76bc6f8193c62c8 | Current | VERIFIED | Phase 2.4 Complete: Location Permissions & Configurable Geofencing Radar Verified |
+| checkpoint-015 | 2026-11-02T22:42:12Z | main | 1ae3709316ab171b67097f16e1917768185687ce | Current | VERIFIED | recovery checkpoint before Phase 2.5: starting Smart Attendance Guider |

@@ -1,0 +1,8 @@
+﻿{
+    "checkpoint_id":  "checkpoint-015",
+    "timestamp_utc":  "2026-11-02T22:42:12Z",
+    "git_commit_hash":  "1ae3709316ab171b67097f16e1917768185687ce",
+    "branch":  "main",
+    "description":  "recovery checkpoint before Phase 2.5: starting Smart Attendance Guider",
+    "status":  "VERIFIED"
+}

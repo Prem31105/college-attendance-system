@@ -167,40 +167,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               },
             ),
-            // Overall Attendance Card
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Overall Attendance', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                        SizedBox(height: 4),
-                        Text('88.4%', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF22C55E))),
-                        SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(Icons.check_circle, size: 14, color: Color(0xFF22C55E)),
-                            SizedBox(width: 4),
-                            Text('Above 75% Requirement', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 70,
-                      width: 70,
-                      child: CircularProgressIndicator(
-                        value: 0.884,
-                        strokeWidth: 8,
-                        backgroundColor: Color(0xFF334155),
-                        color: Color(0xFF22C55E),
+            // Overall Attendance Card (tappable to open Smart Guider)
+            InkWell(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SubjectStatisticsScreen()),
+              ),
+              borderRadius: BorderRadius.circular(12),
+              child: const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text('Overall Attendance', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                              SizedBox(width: 6),
+                              Icon(Icons.insights, size: 14, color: Color(0xFF22C55E)),
+                            ],
+                          ),
+                          SizedBox(height: 4),
+                          Text('88.4%', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF22C55E))),
+                          SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.check_circle, size: 14, color: Color(0xFF22C55E)),
+                              SizedBox(width: 4),
+                              Text('Tap for Smart Target Guider', style: TextStyle(color: Color(0xFF38BDF8), fontSize: 12)),
+                            ],
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      SizedBox(
+                        height: 70,
+                        width: 70,
+                        child: CircularProgressIndicator(
+                          value: 0.884,
+                          strokeWidth: 8,
+                          backgroundColor: Color(0xFF334155),
+                          color: Color(0xFF22C55E),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

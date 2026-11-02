@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -15,6 +15,32 @@ export class ReportsController {
   @Roles(Role.STUDENT)
   async getMyStats(@CurrentUser('studentId') studentId: string) {
     return this.reportsService.getStudentAttendanceStats(studentId);
+  }
+
+  @Get('guider')
+  @Roles(Role.STUDENT)
+  async getMyAttendanceGuider(
+    @CurrentUser('studentId') studentId: string,
+    @Query('target') target?: string,
+  ) {
+    const targetPct = target ? parseFloat(target) : 75.0;
+    return this.reportsService.getStudentAttendanceGuider(
+      studentId,
+      isNaN(targetPct) ? 75.0 : targetPct,
+    );
+  }
+
+  @Get('student/:studentId/guider')
+  @Roles(Role.TEACHER, Role.ADMIN)
+  async getStudentAttendanceGuider(
+    @Param('studentId') studentId: string,
+    @Query('target') target?: string,
+  ) {
+    const targetPct = target ? parseFloat(target) : 75.0;
+    return this.reportsService.getStudentAttendanceGuider(
+      studentId,
+      isNaN(targetPct) ? 75.0 : targetPct,
+    );
   }
 
   @Get('student/:studentId')

@@ -272,3 +272,55 @@ This document records the chronological development milestones, features impleme
   - [x] Checkpoint Created:
     - Pre-implementation recovery checkpoint: checkpoint-012 (`83c6447`).
     - Phase 2.4 completion checkpoint: checkpoint-013.
+
+
+---
+
+### Phase 2.5: Smart Attendance Guider & Predictive Semester Target Calculator (Completed & Verified)
+- **Status**: Completed & Verified
+- **Milestones**:
+  - [x] Backend Predictive Analytics Engine (`backend/src/reports/reports.service.ts`):
+    - Implemented `calculatePredictiveMetrics(attended, total, targetPercentage)`:
+      - Clamps target threshold between 50% and 95%.
+      - Exact Safe Bunks mathematical calculation: $\lfloor (\text{Attended} - (\text{Target} \times \text{Total})) / \text{Target} \rfloor$
+      - Exact Required Consecutive Lectures recovery calculation: $\lceil ((\text{Target} \times \text{Total}) - \text{Attended}) / (1 - \text{Target}) \rceil$
+      - Next Class Impact simulator: Calculates projected attendance and delta percentage if next lecture is attended vs missed.
+      - Status classification: `HEALTHY` ($\ge \text{Target} + 5\%$), `BORDERLINE` ($\ge \text{Target}$ and $< \text{Target} + 5\%$), `CRITICAL` ($< 75\%$).
+    - Implemented `getStudentAttendanceGuider(studentId, targetPercentage)`:
+      - Computes subject-by-subject predictive metrics across all enrolled subjects.
+      - Computes aggregate semester metrics and critical shortage counts.
+      - Generates prioritized, actionable semester recommendations.
+    - Added `@Get('guider')` route in `reports.controller.ts` for authenticated students with `@Query('target')`.
+    - Added `@Get('student/:studentId/guider')` for teachers and admins.
+  - [x] Backend Unit Test Suite (`backend/src/reports/reports.service.spec.ts`):
+    - 8 comprehensive unit tests covering safe bunks, recovery lectures, borderline status, next class impact, zero sessions, and student not found handling.
+    - All 16 backend unit tests passing (`gps.service.spec.ts`, `risk.service.spec.ts`, `reports.service.spec.ts`).
+  - [x] Live Backend REST API Verification:
+    - Authenticated `GET /api/v1/reports/guider?target=80`: HTTP 200 OK with full predictive payload.
+    - Unauthenticated `GET /api/v1/reports/guider`: HTTP 401 Unauthorized (guarded).
+  - [x] Flutter Client Implementation (`student_mobile`):
+    - Created `AttendanceGuiderService` (`student_mobile/lib/core/services/attendance_guider_service.dart`):
+      - Models: `NextClassImpact`, `SubjectGuiderStat`, `GuiderOverallSummary`, `AttendanceGuiderReport`.
+      - Pure client-side recalculation matching backend algorithm for instantaneous UI reactivity when toggling targets.
+      - Offline/network-resilient fallback with semester subject fixtures.
+    - Updated `ApiService` (`student_mobile/lib/core/services/api_service.dart`) with `getAttendanceGuider()`.
+    - Redesigned `SubjectStatisticsScreen` (`student_mobile/lib/screens/subject_statistics_screen.dart`):
+      - Configurable target preset selector (`70%`, `75%`, `80%`, `85%`, `90%`).
+      - Semester overall summary card with animated circular indicator, safe bunks, and status badge.
+      - Critical shortage alert banner with exam detention warning for subjects $< 75\%$.
+      - Subject filter chips (`All`, `Critical (<75%)`, `Borderline`, `Safe`).
+      - Detailed subject cards with progress bar, conducted/attended/missed stats, predictive safe bunks / recovery action pills, and next class impact metrics.
+      - Smart semester recommendations section.
+    - Updated `DashboardScreen` (`student_mobile/lib/screens/dashboard_screen.dart`):
+      - Overall attendance card is interactive and links directly to the Smart Attendance Guider.
+  - [x] Web Dashboard Implementation (`web_dashboard`):
+    - Added Predictive Student Quota & Shortage Guider card to `TeacherDashboard.tsx` displaying student distribution across Safe Zone ($\ge 80\%$), Borderline Zone (75%-79%), and Critical Shortage Zone ($< 75\%$).
+    - Production Vite bundle built cleanly in 5.70s with zero errors.
+  - [x] Automated Test Verification:
+    - Flutter static analysis: `flutter analyze` completed with 0 errors / 0 warnings (ran in 2.0s).
+    - Flutter unit & widget tests: 30/30 passed (`attendance_guider_test.dart`, `location_service_test.dart`, `attendance_test.dart`, `notification_test.dart`, `widget_test.dart`).
+    - Backend Unit Tests (`jest`): 16/16 passed.
+    - Backend E2E Suite (`verify-e2e-workflow.ts`): 19/19 passed.
+  - [x] Checkpoints Created:
+    - Pre-Phase 2.5 recovery checkpoint: checkpoint-015 (`1ae3709`).
+    - Phase 2.5 completion checkpoint: checkpoint-016.
