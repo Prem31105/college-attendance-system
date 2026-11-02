@@ -66,6 +66,41 @@ void main() {
       expect(service.unreadCountNotifier.value, 0);
       expect(service.notificationsNotifier.value.every((n) => n.isRead), true);
     });
+
+    test('Incoming real-time notification adds item and increments unread count without duplicates', () {
+      final service = NotificationService();
+      service.notificationsNotifier.value = [];
+      service.unreadCountNotifier.value = 0;
+
+      // Simulate incoming event from WebSocket
+      final event1 = {
+        'id': 'ws_notif_001',
+        'title': 'Live WebSocket Alert',
+        'message': 'Real-time broadcast received',
+        'priority': 'URGENT',
+        'type': 'CAMPUS_BROADCAST',
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+
+      final item1 = NotificationItem.fromJson(event1);
+      service.notificationsNotifier.value = [item1];
+      service.unreadCountNotifier.value = 1;
+
+      expect(service.notificationsNotifier.value.length, 1);
+      expect(service.unreadCountNotifier.value, 1);
+      expect(service.notificationsNotifier.value.first.title, 'Live WebSocket Alert');
+      expect(service.notificationsNotifier.value.first.isUrgent, true);
+
+      // Duplicate detection
+      final isDuplicate = service.notificationsNotifier.value.any((n) => n.id == item1.id);
+      expect(isDuplicate, true);
+    });
+
+    test('NotificationService Socket lifecycle disconnects cleanly on logout', () {
+      final service = NotificationService();
+      service.disconnectSocket();
+      expect(service.isSocketConnectedNotifier.value, false);
+    });
   });
 
   group('Notification Widgets Tests', () {

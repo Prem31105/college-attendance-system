@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../security/security_utils.dart';
+import 'notification_service.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -31,6 +32,7 @@ class ApiService {
           role: role,
           email: email,
         );
+        NotificationService().connectSocket(token: accessToken);
         return {'success': true, 'data': data};
       } else {
         final err = jsonDecode(res.body);
@@ -144,6 +146,7 @@ class ApiService {
           role: role,
           email: email,
         );
+        NotificationService().connectSocket(token: accessToken);
         return true;
       }
     } catch (_) {}
@@ -169,6 +172,7 @@ class ApiService {
       }
     } catch (_) {}
     accessToken = null;
+    NotificationService().disconnectSocket();
     await TokenManager.clearSession();
   }
 
