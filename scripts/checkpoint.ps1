@@ -60,7 +60,7 @@ Write-Host ">>> Checkpoint ID allocated: $CheckpointId" -ForegroundColor Yellow
 git add -A
 
 $GitStatus = git status --porcelain
-if ($GitStatus.Trim() -eq "") {
+if (-not $GitStatus -or $GitStatus.ToString().Trim() -eq "") {
     Write-Host ">>> No file changes detected to commit. Creating checkpoint metadata from current HEAD..." -ForegroundColor Yellow
     $CommitHash = (git rev-parse HEAD).Trim()
 } else {
