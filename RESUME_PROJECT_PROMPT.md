@@ -53,3 +53,11 @@
   ```bash
   cd web_dashboard && npm test
   ```
+- **Flutter Tests & Analyze**:
+  ```powershell
+  cd student_mobile && flutter test && flutter analyze
+  ```
+- **Phase 2.3 Independent Audit Suite**:
+  ```powershell
+  cd backend && npx ts-node scripts/audit-phase23.ts
+  ```

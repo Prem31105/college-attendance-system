@@ -11,3 +11,4 @@
 | checkpoint-006 | 2026-10-31T21:25:23Z | main | 5b7263c0ef895119115181b5d9de065245363a18 | Current | VERIFIED | Task 1-5 Complete: Git verified, PostgreSQL backed up, Prisma baselined, Flutter guide created |
 | checkpoint-007 | 2026-11-01T19:38:01Z | main | cd189ae359bcde59176980aee4556c3216e3f0c6 | Current | VERIFIED | Phase 2.2 Complete: Multi-role Auth, Onboarding, Registration, Token Rotation & Device Binding |
 | checkpoint-008 | 2026-11-01T21:25:58Z | main | 1bb55ddb396146068f6bb2ec25f2730650e65b2c | Current | VERIFIED | Phase 2.3 Complete: Role-Based Notifications, Priority Alerts & WebSocket Center |
+| checkpoint-010 | 2026-11-02T21:18:29Z | main | 4da99ccacab73e414a1d48c96b0667354a0e0f3e | Current | VERIFIED | pre-fix audit recovery: documented defects in migrations and websocket gateway |

@@ -221,3 +221,9 @@ This document records the chronological development milestones, features impleme
     - Verified opening NotificationDetailScreen automatically marks notification as read.
     - Verified "Mark all read" button updates all items to read state and clears unread dots.
     - Verified returning to Dashboard clears the Urgent Banner and resets badge count.
+  - [x] Phase 2.3 Independent Audit & Verified Defect Remediation:
+    - Independent Audit Suite (`backend/scripts/audit-phase23.ts`): 28/28 checks passed against live backend, PostgreSQL, and Socket.IO WebSocket gateway.
+    - Verified Defect 1 Fixed: Created migration file `20261102_phase23_notification_priority/migration.sql` with Phase 2.3 schema DDL and resolved via `prisma migrate resolve --applied`. Database and Prisma migration history fully synchronized (`prisma migrate status` clean).
+    - Verified Defect 2 Fixed: Implemented JWT connection authentication and room-level authorization in `EventsGateway`. Unauthenticated connections rejected with `auth_error`; students strictly prohibited from subscribing to `role_ADMIN` or arbitrary user rooms.
+    - Full regression test run: Backend Jest (8/8), Notifications Flow (12/12), Auth Flow (9/9), E2E Integration (19/19), Flutter Tests (11/11), Flutter Analyze (0 issues).
+    - Recovery checkpoint created prior to fixes: checkpoint-010. Final Phase 2.3 verified checkpoint created: checkpoint-011.

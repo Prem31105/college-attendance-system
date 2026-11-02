@@ -1,0 +1,8 @@
+﻿{
+    "checkpoint_id":  "checkpoint-010",
+    "timestamp_utc":  "2026-11-02T21:18:29Z",
+    "git_commit_hash":  "4da99ccacab73e414a1d48c96b0667354a0e0f3e",
+    "branch":  "main",
+    "description":  "pre-fix audit recovery: documented defects in migrations and websocket gateway",
+    "status":  "VERIFIED"
+}

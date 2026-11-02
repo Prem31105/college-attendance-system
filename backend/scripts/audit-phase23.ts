@@ -141,20 +141,16 @@ async function main() {
     fail('Notification Indexes', e.message);
   }
 
-  // Migration drift audit
+  // Migration history verification
   try {
     const migrations = await prisma.$queryRaw<{ migration_name: string; applied_steps_count: number }[]>`
       SELECT migration_name, applied_steps_count FROM _prisma_migrations ORDER BY started_at
     `;
-    const mig = migrations[0];
-    // 0_init was baseline resolved (not run), and db push added Phase 2.3 columns outside migration system
-    if (mig.applied_steps_count === 0) {
-      fail(
-        'Migration vs Schema Drift',
-        `FINDING: 0_init has applied_steps_count=0 (baseline resolved). Phase 2.3 columns (priority, readAt, senderId, data) were added via "prisma db push" and are NOT recorded in any migration file. The 0_init migration SQL does not include NotificationPriority enum or new columns.`
-      );
+    const names = migrations.map((m) => m.migration_name);
+    if (names.some((n) => n.includes('phase23_notification_priority'))) {
+      pass('Migration History', `${migrations.length} migrations recorded: [${names.join(', ')}] — Prisma and DB synced`);
     } else {
-      pass('Migration History', `${migrations.length} applied: ${migrations.map((m) => m.migration_name).join(', ')}`);
+      fail('Migration History', `Phase 2.3 migration not recorded in _prisma_migrations. Found: [${names.join(', ')}]`);
     }
   } catch (e: any) {
     fail('Migration History', e.message);
@@ -358,9 +354,22 @@ async function main() {
   let adminSocket: Socket | null = null;
 
   try {
-    studentSocket = io(WS_URL, { transports: ['websocket'], autoConnect: true });
-    teacherSocket = io(WS_URL, { transports: ['websocket'], autoConnect: true });
-    adminSocket = io(WS_URL, { transports: ['websocket'], autoConnect: true });
+    // 10.1: Connect authenticated sockets with JWT
+    studentSocket = io(WS_URL, {
+      transports: ['websocket'],
+      autoConnect: true,
+      auth: { token: studentToken },
+    });
+    teacherSocket = io(WS_URL, {
+      transports: ['websocket'],
+      autoConnect: true,
+      auth: { token: teacherToken },
+    });
+    adminSocket = io(WS_URL, {
+      transports: ['websocket'],
+      autoConnect: true,
+      auth: { token: adminToken },
+    });
 
     await Promise.all([
       new Promise<void>((resolve, reject) => {
@@ -380,19 +389,9 @@ async function main() {
       }),
     ]);
 
-    pass('WebSocket Connection', 'Student, Teacher, and Admin connected to Socket.IO gateway');
+    pass('WebSocket Connection', 'Student, Teacher, and Admin authenticated & connected via JWT');
 
-    // Join proper rooms
-    studentSocket.emit('join_user', studentUser.id);
-    studentSocket.emit('join_role', 'STUDENT');
-    teacherSocket.emit('join_user', teacherUser.id);
-    teacherSocket.emit('join_role', 'TEACHER');
-    adminSocket.emit('join_user', adminUser.id);
-    adminSocket.emit('join_role', 'ADMIN');
-
-    await new Promise((r) => setTimeout(r, 500));
-
-    // Test 10.1: Global Announcement WebSocket Delivery
+    // 10.2: Global Announcement WebSocket Delivery
     const globalPromiseStudent = new Promise<any>((resolve) => {
       studentSocket!.once('global_announcement', resolve);
     });
@@ -421,7 +420,7 @@ async function main() {
       fail('WebSocket Global Delivery', 'Global announcement not received by all roles');
     }
 
-    // Test 10.2: Role-based Announcement WebSocket Delivery
+    // 10.3: Role-based Announcement WebSocket Delivery
     const rolePromiseStudent = new Promise<any>((resolve) => {
       studentSocket!.once('role_announcement', resolve);
     });
@@ -449,41 +448,54 @@ async function main() {
     await new Promise((r) => setTimeout(r, 500));
 
     if (roleStudentEvt && !teacherReceivedStudentRoleEvt) {
-      pass('WebSocket Role Delivery', `Student received role announcement; Teacher correctly did NOT receive it`);
+      pass('WebSocket Role Delivery', `Student received role announcement; Teacher correctly isolated (not leaked)`);
     } else {
       fail('WebSocket Role Delivery', `Student=${!!roleStudentEvt}, TeacherLeak=${teacherReceivedStudentRoleEvt}`);
     }
 
-    // Test 10.3: Gateway Authentication Audit (Can client connect WITHOUT token?)
-    // In EventsGateway, no JWT guard or token validation is implemented
-    const unauthSocket = io(WS_URL, { transports: ['websocket'], autoConnect: true });
-    let unauthConnected = false;
+    // 10.4: Gateway Authentication Enforcement (Unauthenticated socket rejection)
+    const unauthSocket = io(WS_URL, {
+      transports: ['websocket'],
+      autoConnect: true,
+      // No token provided
+    });
+    let unauthRejected = false;
     await new Promise<void>((resolve) => {
-      unauthSocket.on('connect', () => {
-        unauthConnected = true;
+      unauthSocket.on('auth_error', () => {
+        unauthRejected = true;
         resolve();
       });
-      unauthSocket.on('connect_error', () => resolve());
+      unauthSocket.on('disconnect', () => {
+        unauthRejected = true;
+        resolve();
+      });
+      unauthSocket.on('connect_error', () => {
+        unauthRejected = true;
+        resolve();
+      });
       setTimeout(() => resolve(), 2000);
     });
     unauthSocket.disconnect();
 
-    if (unauthConnected) {
-      fail('WebSocket JWT Auth Enforcement', 'DEFECT: EventsGateway accepts connections without JWT authentication. No WsGuard or handshake auth validation exists.');
+    if (unauthRejected) {
+      pass('WebSocket JWT Auth Enforcement', 'Unauthenticated WebSocket connection rejected by gateway');
     } else {
-      pass('WebSocket JWT Auth Enforcement', 'Unauthenticated WebSocket connection rejected');
+      fail('WebSocket JWT Auth Enforcement', 'DEFECT: EventsGateway accepted unauthenticated connection');
     }
 
-    // Test 10.4: Room Authorization Audit (Can Student join role_ADMIN?)
+    // 10.5: Room-level Authorization Enforcement (Student attempting to join role_ADMIN)
     let studentReceivedAdminBroadcast = false;
-    studentSocket.emit('join_role', 'ADMIN'); // Malicious student attempting to join role_ADMIN
     studentSocket.once('role_announcement', (data) => {
       if (data.title?.includes('Admin Confidential')) {
         studentReceivedAdminBroadcast = true;
       }
     });
 
-    await new Promise((r) => setTimeout(r, 500));
+    // Student maliciously attempts to subscribe to role_ADMIN
+    const joinResult: any = await new Promise((resolve) => {
+      studentSocket!.emit('join_role', 'ADMIN', (res: any) => resolve(res));
+      setTimeout(() => resolve({ timeout: true }), 1000);
+    });
 
     if (adminToken) {
       await httpRequest('POST', '/notifications/announce', {
@@ -498,10 +510,10 @@ async function main() {
 
     await new Promise((r) => setTimeout(r, 1000));
 
-    if (studentReceivedAdminBroadcast) {
-      fail('WebSocket Room Authorization', 'DEFECT: Student successfully joined "role_ADMIN" and received Admin announcements. Room subscriptions are NOT authorized.');
+    if (!studentReceivedAdminBroadcast) {
+      pass('WebSocket Room Authorization', 'Student blocked from receiving role_ADMIN broadcasts (Room authorization enforced)');
     } else {
-      pass('WebSocket Room Authorization', 'Student blocked from joining role_ADMIN');
+      fail('WebSocket Room Authorization', 'DEFECT: Student received Admin broadcast — room authorization failed');
     }
 
   } catch (e: any) {
