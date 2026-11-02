@@ -1,0 +1,8 @@
+﻿{
+    "checkpoint_id":  "checkpoint-011",
+    "timestamp_utc":  "2026-11-02T21:31:50Z",
+    "git_commit_hash":  "6cf53bf1cf85655e2e6c534eb2c5a0d5acc7d6b5",
+    "branch":  "main",
+    "description":  "Phase 2.3 Verified: Fixed Migration Drift and WebSocket JWT Auth and Room Authorization",
+    "status":  "VERIFIED"
+}
