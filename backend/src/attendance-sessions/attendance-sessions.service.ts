@@ -82,6 +82,29 @@ export class AttendanceSessionsService {
     };
   }
 
+  async refreshDynamicQr(sessionId: string, teacherId?: string) {
+    const session = await this.prisma.attendanceSession.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Attendance session not found');
+    }
+
+    if (session.status !== SessionStatus.ACTIVE) {
+      throw new BadRequestException('Cannot refresh QR token for an inactive or closed session');
+    }
+
+    if (teacherId && session.teacherId !== teacherId) {
+      throw new ForbiddenException('Only the session instructor can refresh the dynamic QR token');
+    }
+
+    const qrToken = await this.qrService.generateDynamicToken(session.id, session.subjectId);
+    this.eventsGateway.broadcastQrRefresh(session.id, qrToken);
+
+    return qrToken;
+  }
+
   async closeSession(sessionId: string, teacherId: string) {
     const session = await this.prisma.attendanceSession.findUnique({
       where: { id: sessionId },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   ShieldCheck,
@@ -12,6 +12,7 @@ import {
   XCircle,
   Radio,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 interface AttendanceRecordItem {
   id: string;
@@ -25,13 +26,16 @@ interface AttendanceRecordItem {
 }
 
 export const LiveSessionPage: React.FC = () => {
+  const { accessToken } = useAuth();
   const [secondsLeft, setSecondsLeft] = useState(15);
   const [sessionActive, setSessionActive] = useState(true);
+  const [sessionId, setSessionId] = useState<string>('sess-cs601-live-01');
   const [qrToken, setQrToken] = useState<string>('');
   const [showManualModal, setShowManualModal] = useState(false);
   const [showRandomModal, setShowRandomModal] = useState(false);
   const [manualReason, setManualReason] = useState('');
   const [manualRoll, setManualRoll] = useState('CS2026-004');
+  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
 
   const [records, setRecords] = useState<AttendanceRecordItem[]>([
     {
@@ -66,26 +70,44 @@ export const LiveSessionPage: React.FC = () => {
     },
   ]);
 
+  // Fetch or generate fresh dynamic QR token
+  const fetchQrToken = useCallback(async () => {
+    try {
+      const token = accessToken || localStorage.getItem('access_token');
+      const res = await fetch(`http://localhost:3000/api/v1/sessions/${sessionId}/qr`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setQrToken(JSON.stringify(data));
+        return;
+      }
+    } catch (_) {}
+
+    // Fallback QR generation for standalone simulation
+    const payload = {
+      sid: sessionId,
+      sub: 'CS601',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 30,
+      non: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+      sig: 'hmac_sha256_live_token_' + Date.now(),
+    };
+    setQrToken(JSON.stringify(payload));
+  }, [accessToken, sessionId]);
+
   // Dynamic QR auto-refresh cycle (15 seconds)
   useEffect(() => {
-    const generateToken = () => {
-      const payload = {
-        sid: 'sess-cs601-live-01',
-        sub: 'CS601',
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 30,
-        non: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
-        sig: 'hmac_sha256_mock_sig_' + Date.now(),
-      };
-      setQrToken(JSON.stringify(payload));
-    };
-
-    generateToken();
+    fetchQrToken();
 
     const timer = setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
-          generateToken();
+          fetchQrToken();
           return 15;
         }
         return prev - 1;
@@ -93,19 +115,36 @@ export const LiveSessionPage: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [fetchQrToken]);
 
   const verifiedCount = records.filter((r) => r.status === 'VERIFIED').length;
   const suspiciousCount = records.filter((r) => r.status === 'SUSPICIOUS').length;
   const totalEnrolled = 48;
 
-  const handleManualSubmit = (e: React.FormEvent) => {
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualReason) return;
 
+    try {
+      const token = accessToken || localStorage.getItem('access_token');
+      await fetch('http://localhost:3000/api/v1/attendance/manual-mark', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          sessionId,
+          studentId: selectedStudentId || 'student-1',
+          status: 'VERIFIED',
+          mandatoryReason: manualReason,
+        }),
+      });
+    } catch (_) {}
+
     const newRecord: AttendanceRecordItem = {
       id: `rec-manual-${Date.now()}`,
-      studentId: `stud-${Date.now()}`,
+      studentId: selectedStudentId || `stud-${Date.now()}`,
       rollNumber: manualRoll,
       name: 'Student Override',
       status: 'VERIFIED',
@@ -114,8 +153,9 @@ export const LiveSessionPage: React.FC = () => {
       reasonCode: `MANUAL_OVERRIDE: ${manualReason}`,
     };
 
-    setRecords([newRecord, ...records]);
+    setRecords((prev) => [newRecord, ...prev.filter((r) => r.rollNumber !== manualRoll)]);
     setManualReason('');
+    setSelectedStudentId('');
     setShowManualModal(false);
   };
 
@@ -238,6 +278,7 @@ export const LiveSessionPage: React.FC = () => {
                     <th className="pb-3 font-semibold">Status</th>
                     <th className="pb-3 font-semibold">GPS Distance</th>
                     <th className="pb-3 font-semibold text-right">Time</th>
+                    <th className="pb-3 font-semibold text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -258,6 +299,23 @@ export const LiveSessionPage: React.FC = () => {
                       </td>
                       <td className="py-3 text-slate-400 font-mono">{rec.distanceMeters.toFixed(1)}m</td>
                       <td className="py-3 text-right text-slate-400">{rec.markedAt}</td>
+                      <td className="py-3 text-right">
+                        {rec.status === 'SUSPICIOUS' ? (
+                          <button
+                            onClick={() => {
+                              setManualRoll(rec.rollNumber);
+                              setSelectedStudentId(rec.studentId);
+                              setManualReason(`Instructor physical verification passed for ${rec.rollNumber}`);
+                              setShowManualModal(true);
+                            }}
+                            className="rounded-lg bg-amber-500/20 px-2 py-1 text-[10px] font-semibold text-amber-300 hover:bg-amber-500/30 transition-all border border-amber-500/30"
+                          >
+                            Verify
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-500">—</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

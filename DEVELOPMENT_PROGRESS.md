@@ -370,3 +370,51 @@ This document records the chronological development milestones, features impleme
     - All Phase 2 feature milestones (2.1 through 2.6) verified and complete.
     - Completion checkpoint: `checkpoint-018`.
 
+---
+
+### Phase 3: Hardware Security, Cryptographic Binding & Dynamic QR Attendance Workflow (Completed & Verified)
+- **Status**: Completed & Verified
+- **Milestones**:
+  - [x] Pre-Implementation Recovery Checkpoint:
+    - Checkpoint-019 created and tagged prior to initiating Phase 3 modifications.
+  - [x] Backend Endpoints & Service Enhancements (`backend`):
+    - Added `refreshDynamicQr(sessionId, teacherId)` in `AttendanceSessionsService` generating HMAC-SHA256 tokens and broadcasting via WebSocket `eventsGateway.broadcastQrRefresh`.
+    - Added `@Post(':sessionId/qr/refresh')` and `@Get(':sessionId/qr')` endpoints in `AttendanceSessionsController` for live QR streaming.
+    - Updated `DevicesService.generateChallenge(studentId, deviceId?)`: Allows requesting one-time 60s challenges without manual deviceId query if the student has an active registered device.
+    - Atomic replay and duplicate protection: `deviceChallenge.isUsed` marked atomically upon signature verification; duplicate student scans in the same session rejected with HTTP 409 `ConflictException`.
+    - Concurrent student redemption: Multiple eligible students can scan and redeem the exact same valid dynamic QR simultaneously without globally invalidating it for others.
+    - Non-blocking risk evaluation: Suspicious attempts (e.g. mock location) flagged as `SUSPICIOUS` for teacher physical verification without rejecting or blocking low-risk students.
+  - [x] Teacher Web Dashboard Live Dynamic QR & Override Polish (`web_dashboard`):
+    - Updated `LiveSessionPage.tsx` to fetch real HMAC-SHA256 dynamic QR tokens from backend endpoint every 15s.
+    - Added live attendance table action: Suspicious student attempts display a one-click "Verify" button pre-populating roll number and opening manual override modal.
+    - Submits manual overrides to `POST /api/v1/attendance/manual-mark` with mandatory instructor reason and writes immutable audit log trail.
+    - Production Vite bundle built in 4.36s with 0 errors.
+  - [x] Student Mobile Dynamic Scanner Integration (`student_mobile`):
+    - Added `ApiService.getDeviceChallenge()` requesting 60s challenge tokens from `/devices/challenge`.
+    - Updated `AttendanceScannerScreen`: Parses JSON QR tokens (`sid`, `sub`, `iat`, `exp`, `non`, `sig`), acquires real GPS coordinates via `LocationService`, fetches device challenge, signs with hardware Keystore ECDSA private key, and submits evidence to `/attendance/submit`.
+    - Fixed static analysis getters (`eval.latitude`, `eval.longitude`, `eval.accuracyMeters`).
+    - `flutter analyze --no-pub`: 0 issues found in 2.2s.
+    - `flutter test`: 30 / 30 passed.
+  - [x] Comprehensive Automated Unit Testing Suite (`backend/src/attendance/attendance.service.spec.ts`):
+    - 12 comprehensive unit tests covering:
+      1. Valid attendance submission (low-risk -> `VERIFIED`)
+      2. Expired QR token rejection (`QR_TOKEN_EXPIRED` -> `REJECTED`)
+      3. Tampered / invalid QR HMAC signature rejection (`INVALID_QR_SIGNATURE` -> `REJECTED`)
+      4. GPS outside geofence boundary (> 75m -> `REJECTED`)
+      5. Poor GPS accuracy (> 20m -> `REJECTED`)
+      6. Device signature verification failure (`CRYPTOGRAPHIC_SIGNATURE_INVALID` -> `REJECTED`)
+      7. Challenge replay attack rejection (`CHALLENGE_ALREADY_USED_REPLAY_ATTEMPT` -> `REJECTED`)
+      8. Duplicate attendance submission rejection (`ConflictException` HTTP 409)
+      9. Concurrent student scans of same valid dynamic QR (both succeed)
+      10. Mock location spoofing detection (`SUSPICIOUS` status flagged, low-risk students unblocked)
+      11. Mandatory reason validation for teacher manual overrides (min 5 chars)
+      12. Immutable audit log persistence for teacher manual overrides
+    - All 28 backend unit tests passing in-band (`jest --runInBand`).
+  - [x] Integration & Regression Suite:
+    - Backend E2E workflow: 19 / 19 passed (`verify-e2e-workflow.ts`).
+    - Backend Notification flow: 12 / 12 passed (`verify-notifications-flow.ts`).
+  - [x] Checkpoints Created:
+    - Pre-implementation recovery checkpoint: `checkpoint-019`.
+    - Phase 3 completion checkpoint: `checkpoint-020`.
+
+

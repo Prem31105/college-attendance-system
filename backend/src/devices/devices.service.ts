@@ -55,10 +55,10 @@ export class DevicesService {
   /**
    * Generates a 60-second challenge token for the registered device.
    */
-  async generateChallenge(studentId: string, deviceId: string) {
+  async generateChallenge(studentId: string, deviceId?: string) {
     const device = await this.prisma.registeredDevice.findFirst({
       where: {
-        id: deviceId,
+        ...(deviceId ? { id: deviceId } : {}),
         studentId,
         status: DeviceStatus.ACTIVE,
       },

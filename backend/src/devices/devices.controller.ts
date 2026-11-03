@@ -33,7 +33,7 @@ export class DevicesController {
   @HttpCode(HttpStatus.OK)
   async getChallenge(
     @CurrentUser('studentId') studentId: string,
-    @Body('deviceId') deviceId: string,
+    @Body('deviceId') deviceId?: string,
   ) {
     return this.devicesService.generateChallenge(studentId, deviceId);
   }

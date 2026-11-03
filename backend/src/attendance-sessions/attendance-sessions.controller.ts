@@ -31,6 +31,25 @@ export class AttendanceSessionsController {
     return this.sessionsService.closeSession(sessionId, teacherId);
   }
 
+  @Post(':sessionId/qr/refresh')
+  @Roles(Role.TEACHER)
+  @HttpCode(HttpStatus.OK)
+  async refreshQr(
+    @Param('sessionId') sessionId: string,
+    @CurrentUser('teacherId') teacherId: string,
+  ) {
+    return this.sessionsService.refreshDynamicQr(sessionId, teacherId);
+  }
+
+  @Get(':sessionId/qr')
+  @Roles(Role.TEACHER, Role.ADMIN)
+  async getQr(
+    @Param('sessionId') sessionId: string,
+    @CurrentUser('teacherId') teacherId?: string,
+  ) {
+    return this.sessionsService.refreshDynamicQr(sessionId, teacherId);
+  }
+
   @Get('classrooms/all')
   @Roles(Role.TEACHER, Role.ADMIN, Role.STUDENT)
   async getClassrooms() {

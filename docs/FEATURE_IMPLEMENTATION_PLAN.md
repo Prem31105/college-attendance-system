@@ -89,6 +89,29 @@
 4. **Phase 2 Closure**:
    - Checkpoint-018 created; Phase 2 features 100% complete.
 
+#### Phase 3: Hardware Security, Cryptographic Binding & Dynamic QR Workflow (Completed & Verified)
+1. **Dynamic QR Generation & Streaming**:
+   - 15s auto-refresh cycle with 30s token expiration window.
+   - HMAC-SHA256 signature verification over session, subject, issued-at, expires-at, and nonce.
+   - Endpoints: `POST /api/v1/sessions/:sessionId/qr/refresh` and `GET /api/v1/sessions/:sessionId/qr`.
+   - Concurrent redemption: Multiple eligible students can scan and redeem the exact same valid QR token without globally invalidating it.
+2. **Device Hardware Keystore Challenge-Response**:
+   - 60-second single-use challenge token issued via `POST /api/v1/devices/challenge`.
+   - ECDSA P-256 cryptographic signature verified on server against registered public key PEM.
+   - Atomic challenge consumption (`isUsed = true`) protecting against replay attacks.
+3. **Multi-Layer Server-Side Risk Scoring**:
+   - Validates QR freshness, HMAC integrity, GPS proximity (<= 75m default, configurable), accuracy (<= 20m), and mock location flags.
+   - Suspicious attempts (e.g. mock locations) receive `SUSPICIOUS` status, allowing instructor verification without blocking low-risk students.
+   - Duplicate submissions within the same session rejected with HTTP 409 `ConflictException`.
+4. **Teacher Web Dashboard & Mobile Scanner Integration**:
+   - Live teacher dashboard displays projected QR code, auto-refreshes every 15s, and features one-click physical verification for flagged students with mandatory reason.
+   - Flutter mobile scanner parses dynamic QR tokens, acquires live GPS, signs backend challenges, and submits attendance evidence.
+5. **Testing Verification**:
+   - 28 / 28 backend unit tests passed (`attendance.service.spec.ts`, `reports.service.spec.ts`, `gps.service.spec.ts`, `risk.service.spec.ts`).
+   - 30 / 30 Flutter tests passed; `flutter analyze --no-pub` clean in 2.2s.
+   - Web dashboard production bundle built cleanly in 4.36s.
+
+
 
 ---
 

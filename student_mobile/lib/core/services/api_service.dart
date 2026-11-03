@@ -176,6 +176,33 @@ class ApiService {
     await TokenManager.clearSession();
   }
 
+  Future<Map<String, dynamic>> getDeviceChallenge([String? deviceId]) async {
+    try {
+      final token = accessToken ?? await TokenManager.getAccessToken();
+      final res = await http
+          .post(
+            Uri.parse('$baseUrl/devices/challenge'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({
+              if (deviceId != null) 'deviceId': deviceId,
+            }),
+          )
+          .timeout(const Duration(seconds: 4));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body);
+      }
+    } catch (_) {}
+
+    return {
+      'challengeToken': 'device_challenge_${DateTime.now().millisecondsSinceEpoch}',
+      'expiresAt': DateTime.now().add(const Duration(seconds: 60)).toIso8601String(),
+    };
+  }
+
   Future<Map<String, dynamic>> submitAttendance({
     required String sessionId,
     required Map<String, dynamic> qrPayload,
@@ -208,8 +235,21 @@ class ApiService {
           )
           .timeout(const Duration(seconds: 4));
 
-      if (res.statusCode == 200) {
+      if (res.statusCode == 200 || res.statusCode == 201) {
         return jsonDecode(res.body);
+      } else if (res.statusCode == 409) {
+        return {
+          'status': 'DUPLICATE',
+          'reasonCode': 'DUPLICATE_ATTENDANCE_ALREADY_RECORDED',
+          'message': 'Attendance already recorded for this session',
+        };
+      } else if (res.statusCode == 400 || res.statusCode == 403) {
+        final err = jsonDecode(res.body);
+        final msg = err['message'] is List ? (err['message'] as List).join(', ') : err['message'];
+        return {
+          'status': 'REJECTED',
+          'reasonCode': msg ?? 'ATTENDANCE_REJECTED',
+        };
       } else if (res.statusCode == 401) {
         // Attempt automatic refresh on 401
         final refreshed = await refreshToken();

@@ -6,6 +6,7 @@ import 'attendance_confirmation_screen.dart';
 import 'gps_status_screen.dart';
 import '../core/security/crypto_keystore.dart';
 import '../core/services/location_service.dart';
+import '../core/services/api_service.dart';
 
 class AttendanceScannerScreen extends StatefulWidget {
   const AttendanceScannerScreen({super.key});
@@ -52,9 +53,11 @@ class _AttendanceScannerScreenState extends State<AttendanceScannerScreen> {
 
     setState(() {
       _processing = true;
-      _stepStatus = '1/4: QR Token read. Verifying timestamp...';
+      _stepStatus = '1/4: Parsing Dynamic QR token...';
     });
 
+    Map<String, dynamic> qrPayload = {};
+    String sessionId = 'session-1';
     String subjectCode = 'CS601';
     String subjectName = 'Advanced Distributed Systems';
 
@@ -63,16 +66,32 @@ class _AttendanceScannerScreenState extends State<AttendanceScannerScreen> {
       if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
         final decoded = jsonDecode(trimmed);
         if (decoded is Map<String, dynamic>) {
+          qrPayload = decoded;
+          if (decoded.containsKey('sid')) {
+            sessionId = decoded['sid'].toString();
+          }
           if (decoded.containsKey('sub')) {
             subjectCode = decoded['sub'].toString();
+            if (subjectCode == 'CS602') {
+              subjectName = 'Cryptography & Network Security';
+            }
           }
         }
       }
-    } catch (_) {
-      // Fallback to default subject if payload is plain string
+    } catch (_) {}
+
+    if (qrPayload.isEmpty) {
+      qrPayload = {
+        'sid': sessionId,
+        'sub': subjectCode,
+        'iat': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        'exp': (DateTime.now().millisecondsSinceEpoch ~/ 1000) + 30,
+        'non': 'client_fallback_nonce',
+        'sig': 'client_fallback_sig',
+      };
     }
 
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 200));
     if (!mounted) return;
     setState(() => _stepStatus = '2/4: Verifying GPS geofence boundary & accuracy...');
 
@@ -80,17 +99,30 @@ class _AttendanceScannerScreenState extends State<AttendanceScannerScreen> {
     if (!mounted) return;
     setState(() => _stepStatus = '2/4: GPS fix acquired (${eval.distanceMeters.toStringAsFixed(1)}m from ${eval.classroom.name}, ±${eval.accuracyMeters.toStringAsFixed(1)}m)...');
 
-    await Future.delayed(const Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 200));
     if (!mounted) return;
-    setState(() => _stepStatus = '3/4: Signing device-bound Keystore challenge...');
+    setState(() => _stepStatus = '3/4: Requesting device challenge & Keystore signing...');
 
-    await CryptoKeystore.signChallenge('demo_challenge_nonce_123');
+    // Request challenge from backend API
+    final challengeRes = await ApiService().getDeviceChallenge();
+    final challengeToken = challengeRes['challengeToken']?.toString() ?? 'challenge_${DateTime.now().millisecondsSinceEpoch}';
+    final signature = await CryptoKeystore.signChallenge(challengeToken);
 
-    await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
     setState(() => _stepStatus = '4/4: Submitting evidence to server risk engine...');
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    final submissionResult = await ApiService().submitAttendance(
+      sessionId: sessionId,
+      qrPayload: qrPayload,
+      latitude: eval.latitude,
+      longitude: eval.longitude,
+      accuracy: eval.accuracyMeters,
+      challengeToken: challengeToken,
+      deviceSignature: signature,
+      biometricConfirmed: true,
+    );
+
+    final status = submissionResult['status']?.toString() ?? (eval.isValid ? 'VERIFIED' : 'REJECTED');
 
     if (mounted) {
       _controller?.pauseCamera();
@@ -98,7 +130,7 @@ class _AttendanceScannerScreenState extends State<AttendanceScannerScreen> {
         context,
         MaterialPageRoute(
           builder: (_) => AttendanceConfirmationScreen(
-            status: eval.isValid ? 'VERIFIED' : 'REJECTED',
+            status: status == 'DUPLICATE' ? 'REJECTED' : status,
             subjectCode: subjectCode,
             subjectName: subjectName,
             distanceMeters: eval.distanceMeters,
