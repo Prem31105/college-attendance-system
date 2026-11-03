@@ -178,6 +178,74 @@ async function main() {
     },
   });
 
+  // Teacher 2: Prof. Sneha Kulkarni
+  const teacherUser2 = await prisma.user.upsert({
+    where: { email: 'prof.kulkarni@college.edu' },
+    update: { firstName: 'Sneha', lastName: 'Kulkarni' },
+    create: {
+      email: 'prof.kulkarni@college.edu',
+      passwordHash: teacherPassHash,
+      firstName: 'Sneha',
+      lastName: 'Kulkarni',
+      role: Role.TEACHER,
+      isActive: true,
+    },
+  });
+
+  const teacher2 = await prisma.teacher.upsert({
+    where: { userId: teacherUser2.id },
+    update: {},
+    create: {
+      userId: teacherUser2.id,
+      employeeId: 'EMP-CSE-102',
+      departmentId: cseDept.id,
+      designation: 'Assistant Professor',
+    },
+  });
+
+  await prisma.teacherSubjectAssignment.upsert({
+    where: {
+      teacherId_subjectId_sectionId_academicYear: {
+        teacherId: teacher2.id,
+        subjectId: sub2.id,
+        sectionId: sectionA.id,
+        academicYear: '2026-2027',
+      },
+    },
+    update: {},
+    create: {
+      teacherId: teacher2.id,
+      subjectId: sub2.id,
+      sectionId: sectionA.id,
+      academicYear: '2026-2027',
+    },
+  });
+
+  // Teacher 3: Prof. Amit Joshi
+  const teacherUser3 = await prisma.user.upsert({
+    where: { email: 'prof.joshi@college.edu' },
+    update: { firstName: 'Amit', lastName: 'Joshi' },
+    create: {
+      email: 'prof.joshi@college.edu',
+      passwordHash: teacherPassHash,
+      firstName: 'Amit',
+      lastName: 'Joshi',
+      role: Role.TEACHER,
+      isActive: true,
+    },
+  });
+
+  await prisma.teacher.upsert({
+    where: { userId: teacherUser3.id },
+    update: {},
+    create: {
+      userId: teacherUser3.id,
+      employeeId: 'EMP-CSE-103',
+      departmentId: cseDept.id,
+      designation: 'Professor',
+    },
+  });
+
   // 10. Students
   const studentUser1 = await prisma.user.upsert({
     where: { email: 'aarav.sharma@college.edu' },

@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   LayoutDashboard,
   ShieldCheck,
+  MessageSquare,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -19,12 +20,14 @@ export const Sidebar: React.FC = () => {
   const teacherLinks = [
     { to: '/teacher', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/teacher/live', label: 'Live QR Attendance', icon: QrCode },
+    { to: '/teacher/disputes', label: 'Attendance Disputes', icon: MessageSquare },
     { to: '/teacher/reports', label: 'Reports & Exports', icon: FileSpreadsheet },
   ];
 
   const adminLinks = [
     { to: '/admin', label: 'System Analytics', icon: LayoutDashboard },
     { to: '/admin/classrooms', label: 'Geofences & Rooms', icon: Building2 },
+    { to: '/admin/disputes', label: 'Dispute Overviews', icon: MessageSquare },
     { to: '/admin/suspicious', label: 'Suspicious Incidents', icon: AlertTriangle },
     { to: '/admin/audit', label: 'Security Audit Logs', icon: History },
   ];

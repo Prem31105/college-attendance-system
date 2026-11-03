@@ -272,4 +272,71 @@ export class AttendanceService {
       orderBy: { markedAt: 'desc' },
     });
   }
+
+  /**
+   * Retrieves student's attendance history across all enrolled subjects.
+   */
+  async getStudentAttendanceHistory(studentId: string) {
+    const student = await this.prisma.student.findUnique({
+      where: { id: studentId },
+      include: {
+        enrollments: true,
+      },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    const enrolledSubjectIds = student.enrollments.map((e) => e.subjectId);
+
+    // Fetch closed sessions for enrolled subjects
+    const sessions = await this.prisma.attendanceSession.findMany({
+      where: {
+        subjectId: { in: enrolledSubjectIds },
+        sectionId: student.sectionId,
+        status: SessionStatus.CLOSED,
+      },
+      include: {
+        subject: true,
+        classroom: true,
+        teacher: { include: { user: true } },
+        records: {
+          where: { studentId },
+        },
+        disputes: {
+          where: { studentId },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+      orderBy: { startTime: 'desc' },
+      take: 20,
+    });
+
+    return sessions.map((s) => {
+      const record = s.records[0];
+      const dispute = s.disputes[0];
+      const isPresent = record?.status === AttendanceStatus.VERIFIED;
+      return {
+        sessionId: s.id,
+        recordId: record?.id || null,
+        subjectCode: s.subject.code,
+        subjectName: s.subject.name,
+        teacherName: `Prof. ${s.teacher.user.firstName} ${s.teacher.user.lastName}`,
+        classroomName: s.classroom.name,
+        sessionDate: s.startTime,
+        status: isPresent ? 'VERIFIED' : (record?.status || 'ABSENT'),
+        distanceMeters: record?.distanceMeters ?? null,
+        dispute: dispute
+          ? {
+              id: dispute.id,
+              status: dispute.status,
+              reason: dispute.reason,
+              createdAt: dispute.createdAt,
+            }
+          : null,
+      };
+    });
+  }
 }

@@ -24,6 +24,7 @@ enum AttendanceStatus {
   PENDING
   SUSPICIOUS
   REJECTED
+  ABSENT
 }
 
 enum DeviceStatus {
@@ -40,6 +41,13 @@ enum OsType {
 enum CorrectionStatus {
   PENDING
   APPROVED
+  REJECTED
+}
+
+enum DisputeStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
   REJECTED
 }
 
@@ -71,6 +79,8 @@ model User {
   refreshTokens RefreshToken[]
   notifications Notification[]
   auditLogs    AttendanceAuditLog[] @relation("ActorAuditLogs")
+  resolvedDisputes AttendanceDispute[] @relation("DisputeResolvedBy")
+  disputeMessages  DisputeMessage[]
 }
 
 model RefreshToken {
@@ -108,6 +118,7 @@ model Student {
   deviceChallenges   DeviceChallenge[]
   randomChallenges   RandomVerificationChallenge[]
   correctionRequests AttendanceCorrectionRequest[]
+  disputes           AttendanceDispute[]
 }
 
 model Teacher {
@@ -124,6 +135,7 @@ model Teacher {
   assignments  TeacherSubjectAssignment[]
   sessions     AttendanceSession[]
   timetables   Timetable[]
+  disputes     AttendanceDispute[]
 }
 
 model Department {
@@ -272,6 +284,7 @@ model AttendanceSession {
   attempts             AttendanceAttempt[]
   randomChallenges     RandomVerificationChallenge[]
   correctionRequests   AttendanceCorrectionRequest[]
+  disputes             AttendanceDispute[]
 
   @@index([teacherId, status])
 }
@@ -344,6 +357,8 @@ model AttendanceRecord {
   riskScore              Float             @default(0.0)
   reasonCode             String            @default("ALL_CHECKS_PASSED")
   markedAt               DateTime          @default(now())
+
+  disputes               AttendanceDispute[]
 
   @@unique([sessionId, studentId])
   @@index([sessionId, status])
@@ -438,4 +453,45 @@ model SystemSetting {
   value       String
   description String?
   updatedAt   DateTime @updatedAt
+}
+
+model AttendanceDispute {
+  id                 String             @id @default(uuid())
+  studentId          String
+  student            Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacherId          String
+  teacher            Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  sessionId          String
+  session            AttendanceSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  attendanceRecordId String?
+  attendanceRecord   AttendanceRecord?  @relation(fields: [attendanceRecordId], references: [id], onDelete: SetNull)
+  status             DisputeStatus      @default(PENDING)
+  reason             String
+  resolutionNote     String?
+  resolvedById       String?
+  resolvedBy         User?              @relation("DisputeResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  messages           DisputeMessage[]
+
+  @@index([studentId, status])
+  @@index([teacherId, status])
+  @@index([sessionId, studentId])
+}
+
+model DisputeMessage {
+  id         String            @id @default(uuid())
+  disputeId  String
+  dispute    AttendanceDispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  message    String
+  isRead     Boolean           @default(false)
+  readAt     DateTime?
+  createdAt  DateTime          @default(now())
+
+  @@index([disputeId, createdAt])
+  @@index([senderId])
 }

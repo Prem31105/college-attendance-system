@@ -21,6 +21,7 @@ import { ReportsService } from './reports/reports.service';
 import { ReportsController } from './reports/reports.controller';
 import { AdminService } from './admin/admin.service';
 import { AdminController } from './admin/admin.controller';
+import { DisputesModule } from './disputes/disputes.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { AdminController } from './admin/admin.controller';
     PrismaModule,
     AuthModule,
     NotificationsModule,
+    DisputesModule,
   ],
   controllers: [
     AttendanceController,

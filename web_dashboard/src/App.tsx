@@ -8,6 +8,7 @@ import { TeacherDashboard } from './pages/teacher/TeacherDashboard';
 import { LiveSessionPage } from './pages/teacher/LiveSessionPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { ClassroomsPage } from './pages/admin/ClassroomsPage';
+import { DisputesPage } from './pages/teacher/DisputesPage';
 
 const ProtectedLayout: React.FC<{ allowedRole?: 'TEACHER' | 'ADMIN' }> = ({ allowedRole }) => {
   const { user, isAuthenticated } = useAuth();
@@ -30,11 +31,13 @@ const ProtectedLayout: React.FC<{ allowedRole?: 'TEACHER' | 'ADMIN' }> = ({ allo
             {/* Teacher Routes */}
             <Route path="/teacher" element={<TeacherDashboard />} />
             <Route path="/teacher/live" element={<LiveSessionPage />} />
+            <Route path="/teacher/disputes" element={<DisputesPage />} />
             <Route path="/teacher/reports" element={<TeacherDashboard />} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/classrooms" element={<ClassroomsPage />} />
+            <Route path="/admin/disputes" element={<DisputesPage />} />
             <Route path="/admin/suspicious" element={<AdminDashboard />} />
             <Route path="/admin/audit" element={<AdminDashboard />} />
 

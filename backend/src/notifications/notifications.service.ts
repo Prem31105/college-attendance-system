@@ -321,4 +321,41 @@ export class NotificationsService {
       message: `Announcement successfully dispatched to ${recipientUserIds.length} recipient(s)`,
     };
   }
+
+  /**
+   * Dispatches an in-app notification to a single user with real-time WebSocket delivery
+   */
+  async createNotification(data: {
+    userId: string;
+    title: string;
+    message: string;
+    type?: string;
+    priority?: NotificationPriority;
+    senderId?: string;
+    data?: any;
+  }) {
+    const notif = await this.prisma.notification.create({
+      data: {
+        userId: data.userId,
+        title: data.title,
+        message: data.message,
+        type: data.type || 'SYSTEM',
+        priority: data.priority || NotificationPriority.NORMAL,
+        senderId: data.senderId,
+        data: data.data ? JSON.stringify(data.data) : null,
+      },
+    });
+
+    this.eventsGateway.broadcastNotificationToUser(data.userId, {
+      id: notif.id,
+      title: notif.title,
+      message: notif.message,
+      type: notif.type,
+      priority: notif.priority,
+      createdAt: notif.createdAt.toISOString(),
+      data: data.data,
+    });
+
+    return notif;
+  }
 }

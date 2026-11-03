@@ -36,4 +36,10 @@ export class AttendanceController {
   ) {
     return this.attendanceService.manualMark(teacherId, dto);
   }
+
+  @Get('student/history')
+  @Roles(Role.STUDENT)
+  async getStudentHistory(@CurrentUser('studentId') studentId: string) {
+    return this.attendanceService.getStudentAttendanceHistory(studentId);
+  }
 }

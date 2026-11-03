@@ -555,6 +555,79 @@ This document records the chronological development milestones, features impleme
   - [x] Checkpoint Created:
     - Completion checkpoint: `checkpoint-026`.
 
+### Phase 7: Complete Attendance Dispute, Two-Way Student-Teacher Messaging & Database Consistency (Completed & Verified)
+- **Status**: Completed & Verified
+- **Milestones**:
+  - [x] Pre-Implementation Recovery Checkpoint:
+    - Created `checkpoint-027` before modifying code or schema.
+  - [x] Teacher Database Discrepancy Diagnosis & Resolution:
+    - Resolved discrepancy where only 1 teacher record existed in PostgreSQL despite 3 fictional faculty members listed.
+    - Executed `backend/scripts/seed-phase7-teachers.ts`:
+      * Created `Prof. Sneha Kulkarni` (`prof.kulkarni@college.edu`, `EMP-CSE-102`) assigned to `CS602`.
+      * Created `Prof. Amit Joshi` (`prof.joshi@college.edu`, `EMP-CSE-103`).
+      * Created real `Timetable` records in PostgreSQL for CS601 (Prof. Mehta, Room 401) and CS602 (Prof. Kulkarni, Room 401).
+      * Synchronized `backend/prisma/seed.ts`. Database now has 3 verified teachers.
+  - [x] Database Schema & Migrations:
+    - Added `ABSENT` to `AttendanceStatus` enum.
+    - Added `enum DisputeStatus { PENDING, UNDER_REVIEW, RESOLVED, REJECTED }`.
+    - Added `model AttendanceDispute` with foreign keys to `Student`, `Teacher`, `AttendanceSession`, and optional `AttendanceRecord`.
+    - Added `model DisputeMessage` for persisted two-way messaging (`disputeId`, `senderId`, `message`, `isRead`, `readAt`, `createdAt`).
+    - Linked relations to `User`, `Student`, `Teacher`, `AttendanceSession`, and `AttendanceRecord`.
+    - Executed schema synchronization and Prisma client generation (`prisma db push`, `prisma generate`).
+  - [x] Backend API Implementation:
+    - Created `backend/src/disputes/dto/dispute.dto.ts` with class-validator validation rules.
+    - Created `backend/src/disputes/disputes.service.ts`:
+      * `createDispute`: 5-1000 character validation, duplicate dispute prevention (HTTP 409 Conflict), atomic creation of dispute + initial message, in-app notification dispatch to assigned teacher.
+      * `getStudentDisputes` / `getTeacherDisputes`: Lists disputes with subject, classroom, student details, latest message, and unread tracking.
+      * `getDisputeById`: Enforces RBAC ownership, returns full conversation thread, marks incoming messages as read.
+      * `sendMessage`: 1-2000 character validation, stores message, delivers notification to the other party, emits real-time WebSocket event.
+      * `updateStatus`: Updates status to `UNDER_REVIEW`, dispatches notification to student.
+      * `approveDispute`: Atomic transaction, updates dispute to `RESOLVED`, updates/creates `AttendanceRecord` to `VERIFIED` with bitmask 64, logs immutable `AttendanceAuditLog` (`DISPUTE_ATTENDANCE_CORRECTION_APPROVED`, oldValue: ABSENT, newValue: VERIFIED), dispatches notification to student.
+      * `rejectDispute`: Atomic transaction, enforces mandatory justification reason (>=5 chars), logs `DISPUTE_ATTENDANCE_CORRECTION_REJECTED` in audit trail, notifies student.
+    - Added `GET /api/v1/attendance/student/history` in `attendance.service.ts` returning live sessions with `ABSENT` flag and active dispute state.
+    - Registered `DisputesModule` in `app.module.ts`.
+  - [x] Web Dashboard Implementation:
+    - Created `web_dashboard/src/pages/teacher/DisputesPage.tsx`:
+      * Filter tabs (All, Pending, Under Review, Resolved, Rejected).
+      * Dispute list with student details (Aarav Sharma, roll number, subject, session date).
+      * Active two-way chat window with message history.
+      * "Send Reply" input field.
+      * Actions: "Mark Under Review", "Approve Attendance (Mark Present)", "Reject Dispute" (modal with mandatory reason).
+      * Live polling every 4 seconds.
+    - Linked routes `/teacher/disputes` and `/admin/disputes` in `web_dashboard/src/App.tsx`.
+    - Added navigation link with `MessageSquare` icon in `web_dashboard/src/components/Sidebar.tsx`.
+    - Production build verified: `tsc && vite build` built in 18.73s (0 errors).
+  - [x] Flutter Student Mobile App Implementation:
+    - Added dispute methods to `ApiService` (`getAttendanceHistory`, `createDispute`, `getStudentDisputes`, `getDisputeById`, `sendDisputeMessage`).
+    - Revamped `attendance_history_screen.dart`:
+      * Fetches live attendance history from backend.
+      * Distinguishes `VERIFIED` from `ABSENT`.
+      * Prominent "Report Incorrect" dialog on `ABSENT` sessions.
+      * If dispute exists, shows status badge (`PENDING`, `UNDER_REVIEW`, `RESOLVED`, `REJECTED`) and "View Discussion" button.
+    - Created `dispute_conversation_screen.dart`:
+      * Status banner (`PENDING`, `UNDER_REVIEW`, `RESOLVED`, `REJECTED`).
+      * Displays approved/rejected banners with resolution notes.
+      * Two-way chat bubbles (student right, teacher left) with timestamps.
+      * Reply text field + send button for active disputes.
+      * Auto-polling every 4 seconds.
+    - Revamped `attendance_correction_screen.dart` into a unified Dispute & Resolution Center.
+  - [x] Comprehensive Automated & Integration Test Verification:
+    - Phase 7 Two-Way Disputes & Consistency Suite (`verify-phase7-disputes.ts`):
+      * Step 1: 3 faculty members verified in PostgreSQL.
+      * Step 2: Closed session set up for CS601.
+      * Step 3: Student queries Attendance History via API (status: ABSENT).
+      * Step 4: Student files dispute (status: PENDING, initial message saved, teacher notification dispatched).
+      * Step 5: Teacher reviews dispute, sets status to UNDER_REVIEW.
+      * Step 6: Two-way messaging verified (Teacher reply + Student response, 3 messages in thread).
+      * Step 7: Teacher approves dispute, dispute RESOLVED, AttendanceRecord updated to VERIFIED with bitmask 64, AttendanceAuditLog verified (`DISPUTE_ATTENDANCE_CORRECTION_APPROVED`), student notification verified.
+      * Step 8: Edge cases verified: Duplicate dispute blocked (HTTP 409 Conflict), Rejection workflow verified with mandatory justification and audit log (`DISPUTE_ATTENDANCE_CORRECTION_REJECTED`), cross-student unauthorized access blocked (HTTP 403 Forbidden).
+      * Result: ALL CHECKS PASSED SUCCESSFULLY.
+    - Backend Unit Tests: 28 / 28 passed (`jest --passWithNoTests`).
+    - Web Dashboard Build: Vite production bundle built in 18.73s with 0 errors.
+  - [x] Checkpoint Created:
+    - Completion checkpoint: `checkpoint-028`.
+
+
 
 
 

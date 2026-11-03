@@ -474,4 +474,117 @@ class ApiService {
 
     return {'success': false};
   }
+
+  Future<List<Map<String, dynamic>>> getAttendanceHistory() async {
+    try {
+      final token = accessToken ?? await TokenManager.getAccessToken();
+      final res = await http.get(
+        Uri.parse('$baseUrl/attendance/student/history'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 4));
+
+      if (res.statusCode == 200) {
+        final List list = jsonDecode(res.body);
+        return list.cast<Map<String, dynamic>>();
+      }
+    } catch (_) {}
+
+    return [];
+  }
+
+  Future<Map<String, dynamic>> createDispute({
+    required String sessionId,
+    String? recordId,
+    required String reason,
+  }) async {
+    try {
+      final token = accessToken ?? await TokenManager.getAccessToken();
+      final res = await http.post(
+        Uri.parse('$baseUrl/disputes'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'sessionId': sessionId,
+          if (recordId != null) 'attendanceRecordId': recordId,
+          'reason': reason,
+        }),
+      ).timeout(const Duration(seconds: 5));
+
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 201) {
+        return {'success': true, 'data': data};
+      } else {
+        return {'success': false, 'error': data['message'] ?? 'Failed to submit dispute'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getStudentDisputes() async {
+    try {
+      final token = accessToken ?? await TokenManager.getAccessToken();
+      final res = await http.get(
+        Uri.parse('$baseUrl/disputes/student'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 4));
+
+      if (res.statusCode == 200) {
+        final List list = jsonDecode(res.body);
+        return list.cast<Map<String, dynamic>>();
+      }
+    } catch (_) {}
+
+    return [];
+  }
+
+  Future<Map<String, dynamic>?> getDisputeById(String disputeId) async {
+    try {
+      final token = accessToken ?? await TokenManager.getAccessToken();
+      final res = await http.get(
+        Uri.parse('$baseUrl/disputes/$disputeId'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 4));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
+  Future<Map<String, dynamic>> sendDisputeMessage(String disputeId, String message) async {
+    try {
+      final token = accessToken ?? await TokenManager.getAccessToken();
+      final res = await http.post(
+        Uri.parse('$baseUrl/disputes/$disputeId/messages'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'message': message}),
+      ).timeout(const Duration(seconds: 5));
+
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 201) {
+        return {'success': true, 'data': data};
+      } else {
+        return {'success': false, 'error': data['message'] ?? 'Failed to send message'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
 }
