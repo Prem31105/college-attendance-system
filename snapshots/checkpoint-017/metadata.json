@@ -1,0 +1,8 @@
+﻿{
+    "checkpoint_id":  "checkpoint-017",
+    "timestamp_utc":  "2026-11-02T22:59:15Z",
+    "git_commit_hash":  "887ff3214931b977df7485e966f38abff3afe978",
+    "branch":  "main",
+    "description":  "recovery checkpoint before Phase 2.6: final integration testing and emulator verification",
+    "status":  "VERIFIED"
+}

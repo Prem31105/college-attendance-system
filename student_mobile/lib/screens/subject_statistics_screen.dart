@@ -82,6 +82,9 @@ class _SubjectStatisticsScreenState extends State<SubjectStatisticsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // 0. Offline Demo Mode Banner (if using fallback fixture)
+                        if (_report!.isDemoMode) _buildDemoModeBanner(),
+
                         // 1. Configurable Target Selector
                         _buildTargetSelector(),
                         const SizedBox(height: 16),
@@ -111,6 +114,40 @@ class _SubjectStatisticsScreenState extends State<SubjectStatisticsScreen> {
                     ),
                   ),
                 ),
+    );
+  }
+
+  Widget _buildDemoModeBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.6)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.info_outline, color: Colors.amber, size: 24),
+          SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'OFFLINE DEMONSTRATION MODE',
+                  style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Showing isolated simulated records. Connect to live backend and pull to refresh for PostgreSQL verified records.',
+                  style: TextStyle(color: Colors.white70, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -410,6 +447,17 @@ class _SubjectStatisticsScreenState extends State<SubjectStatisticsScreen> {
                       '${s.credits} Credits',
                       style: const TextStyle(color: Colors.grey, fontSize: 11),
                     ),
+                    if (s.isDemoFixture) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('DEMO', style: TextStyle(color: Colors.amber, fontSize: 9, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
                   ],
                 ),
                 Container(

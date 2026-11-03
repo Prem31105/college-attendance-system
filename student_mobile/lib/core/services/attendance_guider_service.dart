@@ -39,6 +39,7 @@ class SubjectGuiderStat {
   final String status; // 'HEALTHY' | 'BORDERLINE' | 'CRITICAL'
   final bool isShortage;
   final NextClassImpact nextClassImpact;
+  final bool isDemoFixture;
 
   const SubjectGuiderStat({
     required this.subjectId,
@@ -54,9 +55,10 @@ class SubjectGuiderStat {
     required this.status,
     required this.isShortage,
     required this.nextClassImpact,
+    this.isDemoFixture = false,
   });
 
-  factory SubjectGuiderStat.fromJson(Map<String, dynamic> json, double target) {
+  factory SubjectGuiderStat.fromJson(Map<String, dynamic> json, double target, {bool isDemo = false}) {
     final attended = (json['attendedSessions'] as num?)?.toInt() ?? 0;
     final total = (json['totalSessions'] as num?)?.toInt() ?? 0;
     final missed = (json['missedSessions'] as num?)?.toInt() ?? max(0, total - attended);
@@ -81,6 +83,7 @@ class SubjectGuiderStat {
       nextClassImpact: json['nextClassImpact'] != null
           ? NextClassImpact.fromJson(json['nextClassImpact'] as Map<String, dynamic>)
           : metrics['nextClassImpact'] as NextClassImpact,
+      isDemoFixture: isDemo,
     );
   }
 }
@@ -119,6 +122,7 @@ class AttendanceGuiderReport {
   final GuiderOverallSummary overall;
   final List<SubjectGuiderStat> subjects;
   final List<String> recommendations;
+  final bool isDemoMode;
 
   const AttendanceGuiderReport({
     required this.studentName,
@@ -128,6 +132,7 @@ class AttendanceGuiderReport {
     required this.overall,
     required this.subjects,
     required this.recommendations,
+    this.isDemoMode = false,
   });
 }
 
@@ -209,6 +214,7 @@ class AttendanceGuiderService {
         status: m['status'] as String,
         isShortage: s.percentage < 75.0,
         nextClassImpact: m['nextClassImpact'] as NextClassImpact,
+        isDemoFixture: s.isDemoFixture,
       );
     }).toList();
 
@@ -272,10 +278,12 @@ class AttendanceGuiderService {
       ),
       subjects: updatedSubjects,
       recommendations: recommendations,
+      isDemoMode: original.isDemoMode,
     );
   }
 
-  /// Fetches guider statistics from the backend or returns local mock fallback
+  /// Fetches real guider statistics from the backend (PostgreSQL verified records only),
+  /// or returns clearly isolated demo fixtures when offline.
   Future<AttendanceGuiderReport> fetchReport({double targetPercentage = 75.0}) async {
     final response = await ApiService().getAttendanceGuider(targetPercentage);
     if (response['success'] == true && response['data'] != null) {
@@ -287,15 +295,10 @@ class AttendanceGuiderService {
           .map((e) => e.toString())
           .toList();
 
+      // STRICT: Map ONLY the actual backend records returned from PostgreSQL
       final subjects = subjectsList
-          .map((s) => SubjectGuiderStat.fromJson(s as Map<String, dynamic>, targetPercentage))
+          .map((s) => SubjectGuiderStat.fromJson(s as Map<String, dynamic>, targetPercentage, isDemo: false))
           .toList();
-
-      // If backend only has 1 subject (e.g. initial seed), augment with standard semester subjects
-      // so student gets a complete multi-subject predictive experience
-      if (subjects.length == 1) {
-        subjects.addAll(_getAugmentedSubjects(targetPercentage));
-      }
 
       final report = AttendanceGuiderReport(
         studentName: student['name'] ?? 'John Doe',
@@ -303,8 +306,8 @@ class AttendanceGuiderService {
         department: student['department'] ?? 'Computer Science and Engineering',
         targetPercentage: targetPercentage,
         overall: GuiderOverallSummary(
-          totalClassesHeld: (overallData['totalClassesHeld'] as num?)?.toInt() ?? 10,
-          totalClassesAttended: (overallData['totalClassesAttended'] as num?)?.toInt() ?? 10,
+          totalClassesHeld: (overallData['totalClassesHeld'] as num?)?.toInt() ?? 0,
+          totalClassesAttended: (overallData['totalClassesAttended'] as num?)?.toInt() ?? 0,
           totalClassesMissed: (overallData['totalClassesMissed'] as num?)?.toInt() ?? 0,
           overallPercentage: (overallData['overallPercentage'] as num?)?.toDouble() ?? 100.0,
           safeBunks: (overallData['safeBunks'] as num?)?.toInt() ?? 0,
@@ -319,78 +322,35 @@ class AttendanceGuiderService {
         ),
         subjects: subjects,
         recommendations: recommendationsList,
+        isDemoMode: false, // Live verified backend records
       );
 
-      // Re-run recalculate to ensure aggregate overall metrics match all subjects
       return recalculateReport(report, targetPercentage);
     }
 
+    // Isolated offline fallback demo report
     return _getDefaultFallbackReport(targetPercentage);
   }
 
-  List<SubjectGuiderStat> _getAugmentedSubjects(double target) {
-    return [
-      SubjectGuiderStat.fromJson({
-        'subjectId': 'sub-cs602',
-        'subjectCode': 'CS602',
-        'subjectName': 'Cryptography & Network Security',
-        'credits': 4,
-        'totalSessions': 28,
-        'attendedSessions': 24,
-      }, target),
-      SubjectGuiderStat.fromJson({
-        'subjectId': 'sub-cs603',
-        'subjectCode': 'CS603',
-        'subjectName': 'Mobile Application Development',
-        'credits': 3,
-        'totalSessions': 24,
-        'attendedSessions': 18,
-      }, target),
-      SubjectGuiderStat.fromJson({
-        'subjectId': 'sub-cs604',
-        'subjectCode': 'CS604',
-        'subjectName': 'Cloud Computing & DevOps',
-        'credits': 3,
-        'totalSessions': 22,
-        'attendedSessions': 14,
-      }, target),
-    ];
-  }
-
+  /// Isolated offline demo fixtures, clearly marked as isDemoMode: true
   AttendanceGuiderReport _getDefaultFallbackReport(double target) {
     final subjects = [
       SubjectGuiderStat.fromJson({
-        'subjectId': 'sub-cs601',
+        'subjectId': 'demo-cs601',
         'subjectCode': 'CS601',
         'subjectName': 'Advanced Distributed Systems',
         'credits': 4,
-        'totalSessions': 34,
-        'attendedSessions': 31,
-      }, target),
+        'totalSessions': 10,
+        'attendedSessions': 10,
+      }, target, isDemo: true),
       SubjectGuiderStat.fromJson({
-        'subjectId': 'sub-cs602',
+        'subjectId': 'demo-cs602',
         'subjectCode': 'CS602',
         'subjectName': 'Cryptography & Network Security',
         'credits': 4,
-        'totalSessions': 28,
-        'attendedSessions': 24,
-      }, target),
-      SubjectGuiderStat.fromJson({
-        'subjectId': 'sub-cs603',
-        'subjectCode': 'CS603',
-        'subjectName': 'Mobile Application Development',
-        'credits': 3,
-        'totalSessions': 24,
-        'attendedSessions': 18,
-      }, target),
-      SubjectGuiderStat.fromJson({
-        'subjectId': 'sub-cs604',
-        'subjectCode': 'CS604',
-        'subjectName': 'Cloud Computing & DevOps',
-        'credits': 3,
-        'totalSessions': 22,
-        'attendedSessions': 14,
-      }, target),
+        'totalSessions': 10,
+        'attendedSessions': 7,
+      }, target, isDemo: true),
     ];
 
     final report = AttendanceGuiderReport(
@@ -399,19 +359,20 @@ class AttendanceGuiderService {
       department: 'Computer Science and Engineering',
       targetPercentage: target,
       overall: const GuiderOverallSummary(
-        totalClassesHeld: 108,
-        totalClassesAttended: 87,
-        totalClassesMissed: 21,
-        overallPercentage: 80.6,
-        safeBunks: 8,
+        totalClassesHeld: 20,
+        totalClassesAttended: 17,
+        totalClassesMissed: 3,
+        overallPercentage: 85.0,
+        safeBunks: 2,
         requiredConsecutiveLectures: 0,
         status: 'HEALTHY',
         hasAttendanceShortage: false,
         criticalSubjectsCount: 1,
-        nextClassImpact: NextClassImpact(ifAttended: 80.7, ifMissed: 79.8, deltaIfAttended: 0.1, deltaIfMissed: -0.8),
+        nextClassImpact: NextClassImpact(ifAttended: 85.7, ifMissed: 81.0, deltaIfAttended: 0.7, deltaIfMissed: -4.0),
       ),
       subjects: subjects,
       recommendations: [],
+      isDemoMode: true, // Clearly isolated as demo fixture
     );
 
     return recalculateReport(report, target);

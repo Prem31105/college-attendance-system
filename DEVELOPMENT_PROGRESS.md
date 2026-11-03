@@ -324,3 +324,49 @@ This document records the chronological development milestones, features impleme
   - [x] Checkpoints Created:
     - Pre-Phase 2.5 recovery checkpoint: checkpoint-015 (`1ae3709`).
     - Phase 2.5 completion checkpoint: checkpoint-016.
+
+---
+
+### Phase 2.6: Final Integration Testing, Pixel_6 Emulator Verification & Phase 2 Closure (Completed & Verified)
+- **Status**: Completed & Verified
+- **Milestones**:
+  - [x] Pre-Implementation Recovery Checkpoint:
+    - Allocated `checkpoint-017` prior to modifying any code or configurations.
+  - [x] Subject Fixture Data Investigation & PostgreSQL Multi-Subject Seeding (Instruction 7 Remediation):
+    - Investigated Phase 2.5 client fixtures; identified that client-side `_getAugmentedSubjects` previously appended simulated demo subjects (`CS602`, `CS603`, `CS604`) to the backend response.
+    - **Completely removed `_getAugmentedSubjects`**: The client now maps ONLY actual PostgreSQL records returned by the backend.
+    - Created seeder `backend/scripts/seed-multi-subject-attendance.ts`:
+      - Enrolled student `CS2026-001` (John Doe) in second subject `CS602` (Cryptography & Network Security).
+      - Created 10 closed attendance sessions for `CS602` with teacher `prof.smith@college.edu` in `Room 401`.
+      - Created 7 verified attendance records for John Doe (sessions 0-6 attended, sessions 7-9 missed).
+    - Verified live endpoint `GET /api/v1/reports/guider?target=75` returns 100% legitimate PostgreSQL records:
+      - `CS601`: 11 sessions, 11 attended (100.0%, HEALTHY, 3 safe bunks)
+      - `CS602`: 10 sessions, 7 attended, 3 missed (70.0%, CRITICAL SHORTAGE, 2 required consecutive lectures to recover)
+      - Aggregate: 21 held, 18 attended (85.7%, HEALTHY, 1 critical subject)
+    - Strictly isolated client offline fallback mode:
+      - Added `isDemoMode: bool` property to `AttendanceGuiderReport`.
+      - Renders prominent amber warning banner `"⚠️ OFFLINE DEMONSTRATION MODE: Showing isolated simulated records. Connect to live backend and pull to refresh for PostgreSQL verified records."` whenever fallback data is in use.
+      - Subject cards show a distinct `DEMO` badge only for simulated fixtures.
+    - Updated `SubjectListScreen` to dynamically load real enrolled subjects and attendance percentages from `AttendanceGuiderService().fetchReport()`.
+  - [x] Windows Build & Memory Optimization:
+    - Adjusted `student_mobile/android/gradle.properties`: Reduced memory allocation from `-Xmx8G -XX:MaxMetaspaceSize=4G` to `-Xmx2048m -XX:MaxMetaspaceSize=512m -XX:ReservedCodeCacheSize=256m`, resolving Dart frontend compiler out-of-memory crashes on Windows.
+    - Added global error handler in `student_mobile/lib/main.dart` (`PlatformDispatcher.instance.onError`) gracefully catching unhandled socket closing events.
+  - [x] Pixel_6 Emulator Runtime Verification:
+    - Compiled fresh debug APK via `flutter build apk --debug` (`build/app/outputs/flutter-apk/app-debug.apk`, 215 MB).
+    - Installed APK onto `Pixel_6` emulator (`emulator-5554`) via `adb install -r` (Performing Streamed Install -> Success).
+    - Launched application via `adb shell am start -n com.college.attendance.student_mobile/.MainActivity`.
+    - Captured and validated UI screenshots (archived in `docs/evidence/phase2_verification/`):
+      - `pixel6_home_dashboard.png`: SmartCampus home screen with urgent notification alert, 88.4% overall attendance card, active CS601 session card with 75m geofence, and quick access navigation grid.
+      - `pixel6_guider_85pct.png`: Smart Target Guider displaying the prominent `OFFLINE DEMONSTRATION MODE` banner, interactive target quota toggle (`85% Quota`), dynamic recalculation to `BORDERLINE` status, amber gauge, and updated safe bunks (recalculated from 3 to 1).
+      - `pixel6_gps_radar.png`: GPS Geofence Radar screen rendering animated radar circles, 75m boundary ring, green "IN RANGE" status, and "GPS Signal Ready for Attendance: Within Room 401 boundary (22.4m <= 75m, ±8.5m)".
+  - [x] Full Automated Verification Suite:
+    - Flutter Static Analysis: `flutter analyze` passed with 0 issues in 13.5s.
+    - Flutter Tests: 30 / 30 passed (`attendance_guider_test.dart`, `location_service_test.dart`, `attendance_test.dart`, `notification_test.dart`, `widget_test.dart`).
+    - Backend Unit Tests: 16 / 16 passed (`gps.service.spec.ts`, `risk.service.spec.ts`, `reports.service.spec.ts` executed in-band).
+    - Backend E2E Suite: 19 / 19 passed (`verify-e2e-workflow.ts`).
+    - Backend Notification Suite: 12 / 12 passed (`verify-notifications-flow.ts`).
+    - Web Dashboard Build: Vite production bundle built in 25.64s with 0 errors (`dist/index.html`, `dist/assets/`).
+  - [x] Phase 2 Official Completion:
+    - All Phase 2 feature milestones (2.1 through 2.6) verified and complete.
+    - Completion checkpoint: `checkpoint-018`.
+

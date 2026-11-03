@@ -141,7 +141,7 @@ void main() {
       expect(find.text('70%'), findsOneWidget);
       expect(find.text('75%'), findsWidgets); // Header pill and preset
       expect(find.text('80%'), findsOneWidget);
-      expect(find.text('85%'), findsOneWidget);
+      expect(find.text('85%'), findsWidgets); // Preset and overall attendance
       expect(find.text('90%'), findsOneWidget);
 
       // Check Overall Semester Attendance title
