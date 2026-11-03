@@ -201,11 +201,37 @@ export class AuthService {
         where: { tokenHash },
       });
 
-      if (!existingToken || existingToken.isRevoked || existingToken.expiresAt < new Date()) {
+      if (!existingToken) {
         throw new UnauthorizedException('Invalid or expired refresh token');
       }
 
-      // Token rotation: revoke previous refresh token
+      // Replay Attack Detection: If token was already revoked, a token reuse attempt is occurring.
+      // Invalidate ALL active refresh tokens for this user immediately and record a security audit entry.
+      if (existingToken.isRevoked) {
+        await this.prisma.refreshToken.updateMany({
+          where: { userId: existingToken.userId },
+          data: { isRevoked: true },
+        });
+
+        await this.prisma.attendanceAuditLog.create({
+          data: {
+            action: 'SECURITY_ALERT_REFRESH_TOKEN_REUSE',
+            entityName: 'RefreshToken',
+            entityId: existingToken.id,
+            actorId: existingToken.userId,
+            oldValue: 'REVOKED_TOKEN_REPRESENTED',
+            newValue: 'ALL_USER_SESSIONS_INVALIDATED',
+          },
+        });
+
+        throw new UnauthorizedException('Security alert: Refresh token reuse detected. All active sessions revoked.');
+      }
+
+      if (existingToken.expiresAt < new Date()) {
+        throw new UnauthorizedException('Refresh token has expired');
+      }
+
+      // Token rotation: revoke previous refresh token atomically
       await this.prisma.refreshToken.update({
         where: { id: existingToken.id },
         data: { isRevoked: true },
@@ -214,7 +240,10 @@ export class AuthService {
       const tokens = await this.generateTokens(payload.sub, payload.email, payload.role);
 
       return tokens;
-    } catch (err) {
+    } catch (err: any) {
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }

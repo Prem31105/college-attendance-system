@@ -1,61 +1,68 @@
 # AGENT_HANDOFF.md
 
 ## Current Work Session Summary
-- **Current Objective**: Phase 4 — Administration, Real-Time Monitoring & Physical Verification.
-- **Status**: **Phase 4 Verified & Complete — Administrative Monitoring & Physical Verification Operational**.
+- **Current Objective**: Phase 5 — Production Readiness, Security Hardening & Complete System Verification.
+- **Status**: **Phase 5 Verified & Complete — System Hardened and Containerized for Production Deployment**.
 - **Key Deliverables in this Session**:
-  - **Task 1: Risk-Based Random Physical Verification (`backend` & `web_dashboard`)**:
-    - Created dedicated [`backend/src/random-verification/random-verification.controller.ts`](file:///D:/flutter%20attandance/backend/src/random-verification/random-verification.controller.ts) with `POST /sessions/:sessionId/random-verification/trigger`, `POST /random-verification/:challengeId/outcome`, and `GET /sessions/:sessionId/random-verification`.
-    - Implemented Fisher-Yates sampling of present students, in-app notification alerts with type `VERIFICATION_ALERT`, and WebSocket broadcasts.
-    - Automatic absence penalty: If marked `ABSENT` by teacher, student attendance record status is immediately flagged as `SUSPICIOUS` with `reasonCode: FAILED_RANDOM_PHYSICAL_VERIFICATION`.
-    - Integrated with [`web_dashboard/src/pages/teacher/LiveSessionPage.tsx`](file:///D:/flutter%20attandance/web_dashboard/src/pages/teacher/LiveSessionPage.tsx): Top "Random Physical Check" button triggers real sampling, dynamic modal presents sampled students with "Present" and "Absent" action buttons.
-  - **Task 2: Multi-Classroom Geofence Management (`backend` & `web_dashboard`)**:
-    - Added `updateClassroom` and `deleteClassroom` methods in [`backend/src/admin/admin.service.ts`](file:///D:/flutter%20attandance/backend/src/admin/admin.service.ts).
-    - Exposed `PATCH /admin/classrooms/:id` and `DELETE /admin/classrooms/:id` in [`backend/src/admin/admin.controller.ts`](file:///D:/flutter%20attandance/backend/src/admin/admin.controller.ts).
-    - Integrated with [`web_dashboard/src/pages/admin/ClassroomsPage.tsx`](file:///D:/flutter%20attandance/web_dashboard/src/pages/admin/ClassroomsPage.tsx): loads live classrooms from REST endpoint, provides zone creation modal with custom geofence radius (25m - 150m), and interactive delete zone actions.
-  - **Task 3: Department-Wide Attendance Auditing & Analytics (`backend` & `web_dashboard`)**:
-    - Implemented `getDepartmentComplianceReport(departmentId?)` in [`backend/src/reports/reports.service.ts`](file:///D:/flutter%20attandance/backend/src/reports/reports.service.ts) calculating aggregate compliance rate, identifying $<75\%$ critical shortage students, safe bunks, and required recovery lectures.
-    - Added audit trail logging in `AdminService.resolveSuspiciousRecord` writing immutable `AttendanceAuditLog` entries with admin actor ID, old status, and new resolution (`VERIFIED` or `REJECTED`).
-    - Enhanced [`web_dashboard/src/pages/admin/AdminDashboard.tsx`](file:///D:/flutter%20attandance/web_dashboard/src/pages/admin/AdminDashboard.tsx):
-      - Live analytics metrics cards (`totalStudents`, `totalTeachers`, `activeSessions`, `attendanceRate`).
-      - Tabbed views: Analytics & System Health, Immutable Audit Trail table, and Suspicious Incidents queue with one-click "Verify" and "Reject" adjudication actions.
-  - **Task 4: Exportable RFC 4180 Compliance & Critical Shortage CSV Reports (`backend`)**:
-    - Implemented `exportComplianceCsv` returning standard compliance CSV with headers `Roll Number,Student Name,Email,Department,Classes Held,Classes Attended,Classes Missed,Percentage (%),Compliance Status,Safe Bunks (at 75%),Required Recovery Lectures`.
-    - Implemented `exportShortageCsv` returning CSV of students below 75% with calculated required consecutive recovery lectures formula.
-    - Added `@Get('export/csv')` and `@Get('export/shortage/csv')` in [`backend/src/reports/reports.controller.ts`](file:///D:/flutter%20attandance/backend/src/reports/reports.controller.ts) with `text/csv` Content-Type and attachment Content-Disposition headers for direct browser downloads.
-    - Added quick-download buttons in `AdminDashboard.tsx`.
-  - **Task 5: Automated Verification Suite (`backend/scripts/verify-phase4-admin.ts`)**:
-    - Created dedicated verification script verifying 20 checks across all 4 Phase 4 sections against PostgreSQL (20/20 passed).
+  - **Task 1: API Rate Limiting & Abuse Protection (`backend`)**:
+    - Configured `@nestjs/throttler` v6 in [`backend/src/app.module.ts`](file:///D:/flutter%20attandance/backend/src/app.module.ts).
+    - Tiered protection: 20 req / 1s (`short`), 100 req / 10s (`medium`), 300 req / 60s (`long`).
+    - Globally bound via `APP_GUARD` (`ThrottlerGuard`).
+  - **Task 2: Helmet Security Headers & Production CORS Configuration (`backend`)**:
+    - Integrated `helmet` in [`backend/src/main.ts`](file:///D:/flutter%20attandance/backend/src/main.ts): enforces `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Strict-Transport-Security`, `X-Download-Options`, `Referrer-Policy`.
+    - Production CORS policy: restricts allowed origins to `process.env.CORS_ORIGINS` (defaults to trusted dashboard ports).
+  - **Task 3: CSRF Mitigation Architecture (`backend`)**:
+    - Confirmed custom `Authorization: Bearer <token>` architecture immunizes all endpoints from standard ambient-credential CSRF attacks (cross-origin forms/scripts cannot set custom bearer headers).
+  - **Task 4: JWT Refresh-Token Rotation, Replay Protection & Session Revocation (`backend`)**:
+    - Enhanced `refreshToken` in [`backend/src/auth/auth.service.ts`](file:///D:/flutter%20attandance/backend/src/auth/auth.service.ts).
+    - **Token Reuse Detection (OWASP)**: Presenting an already-revoked refresh token immediately invalidates ALL active refresh tokens for that user family and logs a security audit entry (`SECURITY_ALERT_REFRESH_TOKEN_REUSE`).
+  - **Task 5: Input Validation, SQL Injection & Secure Error Masking (`backend`)**:
+    - Parameterized queries enforced via Prisma ORM throughout all data models.
+    - Created [`GlobalExceptionsFilter`](file:///D:/flutter%20attandance/backend/src/common/filters/http-exception.filter.ts) masking internal database errors, syntax exceptions, and stack traces from API clients.
+  - **Task 6: CSV Formula-Injection Protection (`backend`)**:
+    - Implemented `sanitizeCsvField` in [`backend/src/reports/reports.service.ts`](file:///D:/flutter%20attandance/backend/src/reports/reports.service.ts): neutralizes formula triggers (`=, +, -, @, \t, \r`) by prepending a single quote `'` and escaping quotes per RFC 4180.
+    - Applied to all columns in `exportComplianceCsv` and `exportShortageCsv`.
+  - **Task 7: Secrets & Environment Validation (`backend`)**:
+    - Implemented `validateEnvironment()` in [`backend/src/config/env.validation.ts`](file:///D:/flutter%20attandance/backend/src/config/env.validation.ts) enforcing minimum 32-char secrets and strictly blocking default dummy secrets in production.
+  - **Task 8: Production Deployment & Container Readiness (`backend` & `web_dashboard`)**:
+    - Multi-stage [`backend/Dockerfile`](file:///D:/flutter%20attandance/backend/Dockerfile): Alpine Linux, dumb-init PID 1 reaper, non-root user `appuser`, automated healthcheck.
+    - Added unauthenticated healthcheck endpoint: `GET /api/v1/auth/health`.
+    - Multi-stage [`web_dashboard/Dockerfile`](file:///D:/flutter%20attandance/web_dashboard/Dockerfile) & [`web_dashboard/nginx.conf`](file:///D:/flutter%20attandance/web_dashboard/nginx.conf): Nginx Alpine with gzip compression, SPA fallback, and security headers.
+  - **Task 9: Phase 5 Security Verification Suite (`backend/scripts/verify-phase5-security.ts`)**:
+    - 23 comprehensive checks covering secrets, CSV formula injection, JWT replay detection, role isolation, container configuration, and disaster recovery scripts (23/23 passed).
 
-## Verification Summary Table (Phase 4)
+## Verification Summary Table (Phase 5)
 | Verification Dimension | Implementation & Test Coverage | Classification | Status |
 | :--- | :--- | :--- | :--- |
-| **1. Classroom Geofence Management** | `GET`, `POST`, `PATCH`, `DELETE /admin/classrooms` verified | Admin REST CRUD | **PASS** |
-| **2. Random Physical Verification Trigger** | Fisher-Yates sampling, `PENDING` challenge generation | Random Check Engine | **PASS** |
-| **3. In-Person Outcome & Absence Penalty** | `VERIFIED` and `ABSENT` outcomes; Absence marks `SUSPICIOUS` | Physical Audit | **PASS** |
-| **4. Session Challenges Retrieval** | `GET /sessions/:sessionId/random-verification` | Real-Time Monitoring | **PASS** |
-| **5. Department Compliance Report** | Aggregate calculation, $<75\%$ shortage detection | Compliance Engine | **PASS** |
-| **6. System Audit Logs & Analytics** | `GET /admin/analytics` and `GET /admin/audit-logs` | Auditing & Metrics | **PASS** |
-| **7. Suspicious Record Adjudication** | Admin resolve to `VERIFIED`/`REJECTED` with audit trail | Security Adjudication | **PASS** |
-| **8. Export Compliance CSV** | RFC 4180 CSV export with standard headers | Reports & Export | **PASS** |
-| **9. Export Shortage CSV** | RFC 4180 CSV with recovery lectures formula | Reports & Export | **PASS** |
-| **10. Phase 4 Verification Suite** | 20/20 passed (`verify-phase4-admin.ts`) | E2E Section Verification | **PASS** |
-| **11. Backend Unit Tests** | 28/28 passed in-band (`attendance`, `reports`, `gps`, `risk`) | Unit Tests | **PASS** |
-| **12. Flutter Test Suite** | 30/30 passed (`attendance_guider`, `location_service`, `attendance`, `notification`, `widget`) | Complete Suite | **PASS** |
-| **13. Flutter Static Analysis** | `flutter analyze --no-pub` clean (0 issues in 2.6s) | Static Analysis | **PASS** |
-| **14. Web Dashboard Production Build** | Vite production bundle built in 5.12s with 0 errors | Production Build | **PASS** |
+| **1. API Rate Limiting** | Tiered limits (20/s, 100/10s, 300/min) globally guarded | Throttling & Anti-Abuse | **PASS** |
+| **2. Helmet Security Headers** | `nosniff`, `SAMEORIGIN`, `strict-transport-security` | HTTP Security Headers | **PASS** |
+| **3. CORS Origin Isolation** | Production origin whitelist with regex/array matching | CORS Security | **PASS** |
+| **4. CSRF Mitigation** | Header-based Bearer JWT authentication (no ambient cookie auth) | CSRF Protection | **PASS** |
+| **5. Refresh Token Replay Protection** | Immediate invalidation of all sessions on revoked token reuse | JWT Session Security | **PASS** |
+| **6. Secure Error Masking** | `GlobalExceptionsFilter` masks database internals and stack traces | Error Handling | **PASS** |
+| **7. CSV Formula Injection** | `sanitizeCsvField` neutralizes `=, +, -, @, \t, \r` prefixes | OWASP CSV Sanitization | **PASS** |
+| **8. Environment Secret Validation** | Minimum 32-char validation; blocks `dev_` defaults in production | Secret Management | **PASS** |
+| **9. Multi-Stage Dockerfiles** | `backend/Dockerfile` (non-root `appuser`) & `web_dashboard/Dockerfile` (Nginx) | Container Deployment | **PASS** |
+| **10. Healthcheck Endpoint** | `GET /api/v1/auth/health` returning status, uptime, timestamp | System Observability | **PASS** |
+| **11. Phase 5 Security Suite** | 23/23 passed (`verify-phase5-security.ts`) | Security Verification | **PASS** |
+| **12. Phase 4 Admin Suite** | 20/20 passed (`verify-phase4-admin.ts`) | Regression Testing | **PASS** |
+| **13. Backend Unit Tests** | 28/28 passed in-band (`attendance`, `reports`, `gps`, `risk`) | Unit Tests | **PASS** |
+| **14. Flutter Test Suite** | 30/30 passed (`attendance_guider`, `location_service`, `attendance`, `notification`, `widget`) | Complete Suite | **PASS** |
+| **15. Flutter Static Analysis** | `flutter analyze --no-pub` clean (0 issues) | Static Analysis | **PASS** |
+| **16. Web Dashboard Build** | Vite production bundle built in 9.66s with 0 errors | Production Build | **PASS** |
 
-## Next Planned Milestone (Phase 5)
-- **Phase 5: Production Readiness, Security Hardening & Complete System Verification**:
-  - Final end-to-end security audits.
-  - Rate limiting, CSRF, and security headers.
-  - End-to-end verification and documentation finalization.
-- **IMPORTANT**: **DO NOT START Phase 5 automatically without user prompt / instruction.**
+## Next Recommended Steps
+- All planned project phases (Phase 0 through Phase 5) are verified and complete.
+- For staging/production rollout:
+  1. Build containers: `docker compose build`
+  2. Launch production stack: `docker compose up -d`
+  3. Generate production secrets: Set unique 64-char random strings for `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, and `QR_HMAC_SECRET`.
 
 ## Exact Commands to Resume & Continue
-1. **Run Phase 4 Verification Suite**: `cd "D:\flutter attandance\backend" && npx ts-node scripts/verify-phase4-admin.ts`
-2. **Run Backend Unit Tests**: `cd "D:\flutter attandance\backend" && npm test -- --runInBand`
-3. **Run Flutter Tests**: `$env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; cd "D:\flutter attandance\student_mobile" && flutter test`
-4. **Run Flutter Analysis**: `$env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; cd "D:\flutter attandance\student_mobile" && flutter analyze --no-pub`
-5. **Run Web Dashboard Build**: `$env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; $env:NODE_OPTIONS="--max-old-space-size=2048"; cd "D:\flutter attandance\web_dashboard" && npm run build`
-6. **Create Checkpoint**: `powershell -ExecutionPolicy Bypass -File scripts/checkpoint.ps1 -Description "description"`
+1. **Run Phase 5 Security Suite**: `cd "D:\flutter attandance\backend" && npx ts-node scripts/verify-phase5-security.ts`
+2. **Run Phase 4 Verification Suite**: `cd "D:\flutter attandance\backend" && npx ts-node scripts/verify-phase4-admin.ts`
+3. **Run Backend Unit Tests**: `cd "D:\flutter attandance\backend" && npm test -- --runInBand`
+4. **Run Flutter Tests**: `$env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; cd "D:\flutter attandance\student_mobile" && flutter test`
+5. **Run Flutter Analysis**: `$env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; cd "D:\flutter attandance\student_mobile" && flutter analyze --no-pub`
+6. **Run Web Dashboard Build**: `$env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; $env:NODE_OPTIONS="--max-old-space-size=2048"; cd "D:\flutter attandance\web_dashboard" && npm run build`
+7. **Create Checkpoint**: `powershell -ExecutionPolicy Bypass -File scripts/checkpoint.ps1 -Description "description"`

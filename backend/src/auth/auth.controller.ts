@@ -39,4 +39,15 @@ export class AuthController {
   async getProfile(@CurrentUser() user: any) {
     return { user };
   }
+
+  @Get('health')
+  @HttpCode(HttpStatus.OK)
+  healthCheck() {
+    return {
+      status: 'ok',
+      service: 'college-attendance-backend',
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.floor(process.uptime()),
+    };
+  }
 }

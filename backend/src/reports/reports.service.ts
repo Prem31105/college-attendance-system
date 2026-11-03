@@ -443,7 +443,21 @@ export class ReportsService {
   }
 
   /**
-   * Generates RFC 4180 compliant CSV export of student attendance.
+   * Sanitizes a field to prevent CSV formula injection (OWASP CSV Injection Prevention).
+   * Neutralizes cells starting with =, +, -, @, \t, or \r by prepending a single quote
+   * and escaping double quotes per RFC 4180.
+   */
+  public sanitizeCsvField(value: any): string {
+    if (value === null || value === undefined) return '""';
+    let str = String(value);
+    if (/^[=+\-@\t\r]/.test(str)) {
+      str = `'${str}`;
+    }
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+
+  /**
+   * Generates RFC 4180 compliant CSV export of student attendance with formula-injection protection.
    */
   async exportComplianceCsv(departmentId?: string): Promise<string> {
     const report = await this.getDepartmentComplianceReport(departmentId);
@@ -463,15 +477,15 @@ export class ReportsService {
     ];
 
     const rows = report.students.map((s) => [
-      `"${s.rollNumber}"`,
-      `"${s.name}"`,
-      `"${s.email}"`,
-      `"${s.department}"`,
+      this.sanitizeCsvField(s.rollNumber),
+      this.sanitizeCsvField(s.name),
+      this.sanitizeCsvField(s.email),
+      this.sanitizeCsvField(s.department),
       s.classesHeld,
       s.classesAttended,
       s.classesMissed,
       `${s.percentage}%`,
-      `"${s.status}"`,
+      this.sanitizeCsvField(s.status),
       s.safeBunks,
       s.requiredRecoveryLectures,
     ]);
@@ -480,7 +494,7 @@ export class ReportsService {
   }
 
   /**
-   * Generates CSV export containing only students with attendance shortfall (<75%).
+   * Generates CSV export containing only students with attendance shortfall (<75%) with formula-injection protection.
    */
   async exportShortageCsv(departmentId?: string): Promise<string> {
     const report = await this.getDepartmentComplianceReport(departmentId);
@@ -500,16 +514,16 @@ export class ReportsService {
     ];
 
     const rows = shortageStudents.map((s) => [
-      `"${s.rollNumber}"`,
-      `"${s.name}"`,
-      `"${s.email}"`,
-      `"${s.department}"`,
+      this.sanitizeCsvField(s.rollNumber),
+      this.sanitizeCsvField(s.name),
+      this.sanitizeCsvField(s.email),
+      this.sanitizeCsvField(s.department),
       s.classesHeld,
       s.classesAttended,
       `${s.percentage}%`,
       '75%',
       s.requiredRecoveryLectures,
-      '"CRITICAL: Risk of semester examination detention"',
+      this.sanitizeCsvField('CRITICAL: Risk of semester examination detention'),
     ]);
 
     return [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
