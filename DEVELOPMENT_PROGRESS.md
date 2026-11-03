@@ -417,4 +417,54 @@ This document records the chronological development milestones, features impleme
     - Pre-implementation recovery checkpoint: `checkpoint-019`.
     - Phase 3 completion checkpoint: `checkpoint-020`.
 
+---
+
+### Phase 4: Administration, Real-Time Monitoring & Physical Verification (Completed & Verified)
+- **Status**: Completed & Verified
+- **Milestones**:
+  - [x] Pre-Implementation Recovery Checkpoint:
+    - Allocated `checkpoint-021` before Phase 4 code modifications.
+  - [x] Risk-Based Random Physical Verification:
+    - Created dedicated `RandomVerificationController` (`backend/src/random-verification/random-verification.controller.ts`) with endpoints:
+      - `POST /sessions/:sessionId/random-verification/trigger`: Performs Fisher-Yates sampling of present students, creates challenge tokens with status `PENDING`, and dispatches in-app `VERIFICATION_ALERT` notifications.
+      - `POST /random-verification/:challengeId/outcome`: Instructor records outcome (`VERIFIED` or `ABSENT`).
+      - Absence penalty enforcement: If marked `ABSENT`, attendance record is automatically flagged as `SUSPICIOUS` with `reasonCode: FAILED_RANDOM_PHYSICAL_VERIFICATION` and risk penalty applied.
+      - `GET /sessions/:sessionId/random-verification`: Queries active physical challenges for a session.
+    - Updated `AppModule` to register `RandomVerificationController`.
+    - Integrated with teacher dashboard (`web_dashboard/src/pages/teacher/LiveSessionPage.tsx`):
+      - Top "Random Physical Check" button triggers real sampling API.
+      - Dynamic modal lists sampled students with roll numbers and seats.
+      - Provides "Present" and "Absent" action buttons calling outcome endpoints.
+  - [x] Multi-Classroom Geofence Management:
+    - Added `updateClassroom` and `deleteClassroom` methods to `AdminService`.
+    - Added `PATCH /admin/classrooms/:id` and `DELETE /admin/classrooms/:id` to `AdminController`.
+    - Integrated with `ClassroomsPage.tsx`:
+      - Fetches active classrooms from `GET /admin/classrooms`.
+      - Supports creating new geofence zones via `POST /admin/classrooms` with custom radius (25m - 150m) and coordinates.
+      - Supports deleting classroom geofence zones with live UI removal.
+  - [x] Department-Wide Attendance Auditing:
+    - Implemented `getDepartmentComplianceReport(departmentId?)` in `ReportsService`. Aggregates all closed sessions, calculates percentage, identifies critical shortage students (<75%), safe bunks, and required recovery lectures.
+    - Implemented immutable audit trail in `AdminService.resolveSuspiciousRecord`: Logs `AttendanceAuditLog` entries with admin actor ID, old status, and new resolution (`VERIFIED` or `REJECTED`).
+    - Integrated with `AdminDashboard.tsx`:
+      - Live analytics metrics cards (`totalStudents`, `totalTeachers`, `activeSessions`, `attendanceRate`).
+      - Live immutable Audit Log stream table with actor, action, target entity, and timestamps.
+      - Suspicious Incidents queue with one-click "Verify" and "Reject" adjudication actions.
+  - [x] Exportable Compliance Reports:
+    - Implemented RFC 4180 compliant CSV export in `ReportsService.exportComplianceCsv`:
+      - Headers: `Roll Number,Student Name,Email,Department,Classes Held,Classes Attended,Classes Missed,Percentage (%),Compliance Status,Safe Bunks (at 75%),Required Recovery Lectures`.
+    - Implemented Critical Shortage CSV export in `ReportsService.exportShortageCsv`:
+      - Filters students with $<75\%$ attendance and calculates exact required consecutive recovery lectures.
+    - Added `@Get('export/csv')` and `@Get('export/shortage/csv')` with `text/csv` Content-Type and attachment Content-Disposition headers.
+    - Added direct browser CSV download buttons in `AdminDashboard.tsx`.
+  - [x] Automated Test Verification:
+    - Phase 4 Admin Verification Suite (`backend/scripts/verify-phase4-admin.ts`): 20 / 20 tests passed covering all 4 sections against PostgreSQL.
+    - Backend Unit Tests: 28 / 28 passed (`jest --runInBand`).
+    - Flutter Static Analysis: `flutter analyze --no-pub` clean (0 errors, 0 warnings in 2.6s).
+    - Flutter Tests: 30 / 30 passed (`flutter test`).
+    - Web Dashboard Build: Vite production bundle built cleanly in 5.12s with zero errors.
+  - [x] Checkpoints Created:
+    - Pre-implementation recovery checkpoint: `checkpoint-021`.
+    - Phase 4 completion checkpoint: `checkpoint-022`.
+
+
 

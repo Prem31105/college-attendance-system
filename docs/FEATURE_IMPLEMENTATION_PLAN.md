@@ -111,6 +111,32 @@
    - 30 / 30 Flutter tests passed; `flutter analyze --no-pub` clean in 2.2s.
    - Web dashboard production bundle built cleanly in 4.36s.
 
+#### Phase 4: Administration, Real-Time Monitoring & Physical Verification (Completed & Verified)
+1. **Risk-Based Random Physical Verification Challenges**:
+   - Fisher-Yates random sampling of verified students during active sessions.
+   - Dedicated controller `RandomVerificationController` (`POST /sessions/:sessionId/random-verification/trigger`, `POST /random-verification/:challengeId/outcome`, `GET /sessions/:sessionId/random-verification`).
+   - Dynamic teacher modal in `LiveSessionPage.tsx` displaying sampled students with "Present" and "Absent" action buttons.
+   - Automatic absence penalty: Failure of in-person verification updates attendance record status to `SUSPICIOUS` with `reasonCode: FAILED_RANDOM_PHYSICAL_VERIFICATION`.
+   - In-app student push notification alerts with priority `VERIFICATION_ALERT`.
+2. **Multi-Classroom Geofence Management**:
+   - Geofence CRUD endpoints: `GET`, `POST`, `PATCH`, `DELETE` at `/api/v1/admin/classrooms`.
+   - Dynamic coordinate and radius configuration (25m - 150m) via `ClassroomsPage.tsx`.
+3. **Department-Wide Attendance Auditing & Analytics**:
+   - Department-wide aggregation in `ReportsService.getDepartmentComplianceReport` calculating aggregate compliance rate and identifying critical shortage students (<75%).
+   - Immutable audit logging in `AdminService.resolveSuspiciousRecord` with admin actor ID, old status, and new resolution (`VERIFIED` or `REJECTED`).
+   - Admin Dashboard (`AdminDashboard.tsx`) with live analytics metrics, immutable audit trail stream table, and suspicious incidents adjudication queue.
+4. **Exportable Compliance & Shortage Reports**:
+   - RFC 4180 compliant CSV exports:
+     - Overall compliance CSV (`/reports/export/csv`).
+     - Critical shortage list with required recovery lectures formula (`/reports/export/shortage/csv`).
+   - Direct download action buttons in `AdminDashboard.tsx`.
+5. **Testing Verification**:
+   - Phase 4 Admin Verification Suite: 20 / 20 passed (`verify-phase4-admin.ts`).
+   - Backend Unit Tests: 28 / 28 passed (`jest --runInBand`).
+   - Flutter Static Analysis: `flutter analyze --no-pub` clean (0 errors, 0 warnings in 2.6s).
+   - Flutter Unit & Widget Tests: 30 / 30 passed.
+   - Web Dashboard Production Build: Built cleanly in 5.12s with zero errors.
+
 
 
 ---

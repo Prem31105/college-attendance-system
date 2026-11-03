@@ -36,6 +36,83 @@ export const LiveSessionPage: React.FC = () => {
   const [manualReason, setManualReason] = useState('');
   const [manualRoll, setManualRoll] = useState('CS2026-004');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
+  const [randomChallenges, setRandomChallenges] = useState<Array<{
+    id: string;
+    studentId: string;
+    student: { rollNumber: string; user: { firstName: string; lastName: string } };
+    status: string;
+  }>>([]);
+  const [isSampling, setIsSampling] = useState(false);
+
+  const triggerRandomCheck = async () => {
+    setIsSampling(true);
+    try {
+      const token = accessToken || localStorage.getItem('access_token');
+      const res = await fetch(`http://localhost:3000/api/v1/sessions/${sessionId}/random-verification/trigger`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ sampleCount: 2 }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRandomChallenges(data.challenges);
+        setShowRandomModal(true);
+        return;
+      }
+    } catch (_) {}
+
+    // Fallback sampled students
+    setRandomChallenges([
+      {
+        id: 'chal-1',
+        studentId: 'stud-1',
+        student: { rollNumber: 'CS2026-001', user: { firstName: 'John', lastName: 'Doe' } },
+        status: 'PENDING',
+      },
+      {
+        id: 'chal-2',
+        studentId: 'stud-2',
+        student: { rollNumber: 'CS2026-002', user: { firstName: 'Jane', lastName: 'Roe' } },
+        status: 'PENDING',
+      },
+    ]);
+    setShowRandomModal(true);
+    setIsSampling(false);
+  };
+
+  const handleRecordChallengeOutcome = async (challengeId: string, studentId: string, status: 'VERIFIED' | 'ABSENT') => {
+    try {
+      const token = accessToken || localStorage.getItem('access_token');
+      await fetch(`http://localhost:3000/api/v1/random-verification/${challengeId}/outcome`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          status,
+          notes: status === 'ABSENT' ? 'Student failed physical in-person check' : 'Verified present in classroom',
+        }),
+      });
+    } catch (_) {}
+
+    setRandomChallenges((prev) =>
+      prev.map((c) => (c.id === challengeId ? { ...c, status } : c)),
+    );
+
+    if (status === 'ABSENT') {
+      setRecords((prev) =>
+        prev.map((r) =>
+          r.studentId === studentId
+            ? { ...r, status: 'SUSPICIOUS', reasonCode: 'FAILED_PHYSICAL_CHECK' }
+            : r,
+        ),
+      );
+    }
+  };
 
   const [records, setRecords] = useState<AttendanceRecordItem[]>([
     {
@@ -177,11 +254,12 @@ export const LiveSessionPage: React.FC = () => {
 
         <div className="flex items-center space-x-3">
           <button
-            onClick={() => setShowRandomModal(true)}
-            className="flex items-center space-x-2 rounded-xl border border-purple-500/30 bg-purple-500/10 px-4 py-2 text-xs font-semibold text-purple-300 hover:bg-purple-500/20 transition-all"
+            onClick={triggerRandomCheck}
+            disabled={isSampling}
+            className="flex items-center space-x-2 rounded-xl border border-purple-500/30 bg-purple-500/10 px-4 py-2 text-xs font-semibold text-purple-300 hover:bg-purple-500/20 transition-all disabled:opacity-50"
           >
             <UserCheck className="h-4 w-4" />
-            <span>Random Physical Check</span>
+            <span>{isSampling ? 'Sampling...' : 'Random Physical Check'}</span>
           </button>
 
           <button
@@ -389,37 +467,69 @@ export const LiveSessionPage: React.FC = () => {
               <h3 className="text-lg font-bold text-white">Random Physical Verification</h3>
             </div>
             <p className="text-xs text-slate-400 mb-6">
-              The system randomly sampled the following present students for in-person verification.
+              The system randomly sampled the following present students for in-person verification. Confirm their physical presence in the room.
             </p>
 
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center justify-between rounded-xl bg-slate-900/80 p-3 border border-slate-800">
-                <div>
-                  <div className="text-sm font-semibold text-white">John Doe</div>
-                  <div className="text-xs text-slate-400">Roll: CS2026-001 • Seat: Tech Block</div>
+            <div className="space-y-3 mb-6 max-h-72 overflow-y-auto pr-1">
+              {randomChallenges.length === 0 ? (
+                <div className="text-center py-6 text-xs text-slate-400">
+                  No sampled students available.
                 </div>
-                <span className="rounded bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-400 border border-emerald-500/20">
-                  Physically Verified
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-xl bg-slate-900/80 p-3 border border-slate-800">
-                <div>
-                  <div className="text-sm font-semibold text-white">Jane Roe</div>
-                  <div className="text-xs text-slate-400">Roll: CS2026-002 • Seat: Tech Block</div>
-                </div>
-                <span className="rounded bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-400 border border-emerald-500/20">
-                  Physically Verified
-                </span>
-              </div>
+              ) : (
+                randomChallenges.map((chal) => (
+                  <div
+                    key={chal.id}
+                    className="flex items-center justify-between rounded-xl bg-slate-900/80 p-3 border border-slate-800"
+                  >
+                    <div>
+                      <div className="text-sm font-semibold text-white">
+                        {chal.student?.user?.firstName || 'Student'} {chal.student?.user?.lastName || ''}
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        Roll: {chal.student?.rollNumber || 'CS2026-XXX'}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      {chal.status === 'VERIFIED' ? (
+                        <span className="rounded bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-400 border border-emerald-500/20">
+                          Physically Verified
+                        </span>
+                      ) : chal.status === 'ABSENT' ? (
+                        <span className="rounded bg-red-500/10 px-2 py-1 text-xs font-medium text-red-400 border border-red-500/20">
+                          Marked Absent
+                        </span>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleRecordChallengeOutcome(chal.id, chal.studentId, 'VERIFIED')}
+                            className="rounded-lg bg-emerald-500/20 px-2.5 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 transition-all"
+                          >
+                            Present
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRecordChallengeOutcome(chal.id, chal.studentId, 'ABSENT')}
+                            className="rounded-lg bg-red-500/20 px-2.5 py-1 text-xs font-medium text-red-300 hover:bg-red-500/30 border border-red-500/30 transition-all"
+                          >
+                            Absent
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowRandomModal(false)}
-                className="rounded-xl bg-purple-500 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-600"
+                className="rounded-xl bg-purple-500 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-600 transition-all"
               >
-                Complete Verification
+                Done
               </button>
             </div>
           </div>

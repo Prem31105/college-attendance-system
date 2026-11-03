@@ -57,6 +57,10 @@
   ```powershell
   $env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; cd student_mobile && flutter test && flutter analyze
   ```
+- **Phase 4 Admin & Compliance Verification Suite**:
+  ```powershell
+  cd backend && npx ts-node scripts/verify-phase4-admin.ts
+  ```
 - **Phase 2.3 Independent Audit Suite**:
   ```powershell
   cd backend && npx ts-node scripts/audit-phase23.ts

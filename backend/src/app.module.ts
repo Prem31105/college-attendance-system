@@ -14,6 +14,7 @@ import { AttendanceSessionsController } from './attendance-sessions/attendance-s
 import { AttendanceService } from './attendance/attendance.service';
 import { AttendanceController } from './attendance/attendance.controller';
 import { RandomVerificationService } from './random-verification/random-verification.service';
+import { RandomVerificationController } from './random-verification/random-verification.controller';
 import { ReportsService } from './reports/reports.service';
 import { ReportsController } from './reports/reports.controller';
 import { AdminService } from './admin/admin.service';
@@ -28,6 +29,7 @@ import { AdminController } from './admin/admin.controller';
     DevicesController,
     ReportsController,
     AdminController,
+    RandomVerificationController,
   ],
   providers: [
     EventsGateway,

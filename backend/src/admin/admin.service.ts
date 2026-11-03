@@ -117,6 +117,38 @@ export class AdminService {
     });
   }
 
+  async updateClassroom(
+    id: string,
+    data: {
+      name?: string;
+      building?: string;
+      latitude?: number;
+      longitude?: number;
+      geofenceRadiusMeters?: number;
+    },
+  ) {
+    const existing = await this.prisma.classroom.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Classroom not found');
+    }
+
+    return this.prisma.classroom.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deleteClassroom(id: string) {
+    const existing = await this.prisma.classroom.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Classroom not found');
+    }
+
+    return this.prisma.classroom.delete({
+      where: { id },
+    });
+  }
+
   /**
    * System Audit Logs viewer.
    */

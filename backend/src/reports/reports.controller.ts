@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
+import { Response } from 'express';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -56,5 +57,35 @@ export class ReportsController {
     @Param('sectionId') sectionId: string,
   ) {
     return this.reportsService.getSubjectAttendanceReport(subjectId, sectionId);
+  }
+
+  @Get('compliance')
+  @Roles(Role.TEACHER, Role.ADMIN)
+  async getDepartmentCompliance(@Query('departmentId') departmentId?: string) {
+    return this.reportsService.getDepartmentComplianceReport(departmentId);
+  }
+
+  @Get('export/csv')
+  @Roles(Role.TEACHER, Role.ADMIN)
+  async exportComplianceCsv(
+    @Res() res: Response,
+    @Query('departmentId') departmentId?: string,
+  ) {
+    const csvData = await this.reportsService.exportComplianceCsv(departmentId);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="attendance_compliance_report.csv"');
+    return res.send(csvData);
+  }
+
+  @Get('export/shortage/csv')
+  @Roles(Role.TEACHER, Role.ADMIN)
+  async exportShortageCsv(
+    @Res() res: Response,
+    @Query('departmentId') departmentId?: string,
+  ) {
+    const csvData = await this.reportsService.exportShortageCsv(departmentId);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="critical_shortage_attendance_report.csv"');
+    return res.send(csvData);
   }
 }

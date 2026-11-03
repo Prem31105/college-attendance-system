@@ -1,8 +1,20 @@
-import React, { useState } from 'react';
-import { Building2, MapPin, Plus, Shield, Search } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Building2, MapPin, Plus, Shield, Search, Trash2 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+
+interface ClassroomItem {
+  id: string;
+  name: string;
+  building: string;
+  latitude: number;
+  longitude: number;
+  radiusMeters?: number;
+  radius?: number;
+}
 
 export const ClassroomsPage: React.FC = () => {
-  const [classrooms, setClassrooms] = useState([
+  const { accessToken } = useAuth();
+  const [classrooms, setClassrooms] = useState<ClassroomItem[]>([
     { id: '1', name: 'Room 401', building: 'Technology Block A', latitude: 12.9715987, longitude: 77.5945627, radius: 75 },
     { id: '2', name: 'Room 402', building: 'Technology Block A', latitude: 12.9716500, longitude: 77.5946100, radius: 75 },
     { id: '3', name: 'Computing Lab 3', building: 'Center for Advanced Research', latitude: 12.9718000, longitude: 77.5947000, radius: 80 },
@@ -16,21 +28,86 @@ export const ClassroomsPage: React.FC = () => {
   const [newLat, setNewLat] = useState('12.971700');
   const [newLng, setNewLng] = useState('77.594650');
   const [newRadius, setNewRadius] = useState(75);
+  const [loading, setLoading] = useState(false);
 
-  const handleAdd = (e: React.FormEvent) => {
+  const fetchClassrooms = useCallback(async () => {
+    try {
+      const token = accessToken || localStorage.getItem('access_token');
+      const res = await fetch('http://localhost:3000/api/v1/admin/classrooms', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setClassrooms(
+            data.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              building: c.building,
+              latitude: Number(c.latitude),
+              longitude: Number(c.longitude),
+              radius: c.radiusMeters || 75,
+            })),
+          );
+        }
+      }
+    } catch (_) {}
+  }, [accessToken]);
+
+  useEffect(() => {
+    fetchClassrooms();
+  }, [fetchClassrooms]);
+
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    const item = {
-      id: String(Date.now()),
+    const token = accessToken || localStorage.getItem('access_token');
+    const payload = {
+      name: newName,
+      building: newBuilding,
+      latitude: parseFloat(newLat),
+      longitude: parseFloat(newLng),
+      radiusMeters: newRadius,
+    };
+
+    let createdId = String(Date.now());
+    try {
+      const res = await fetch('http://localhost:3000/api/v1/admin/classrooms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.id) createdId = data.id;
+      }
+    } catch (_) {}
+
+    const item: ClassroomItem = {
+      id: createdId,
       name: newName,
       building: newBuilding,
       latitude: parseFloat(newLat),
       longitude: parseFloat(newLng),
       radius: newRadius,
     };
-    setClassrooms([...classrooms, item]);
+    setClassrooms((prev) => [...prev, item]);
     setShowAddModal(false);
     setNewName('');
     setNewBuilding('');
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const token = accessToken || localStorage.getItem('access_token');
+      await fetch(`http://localhost:3000/api/v1/admin/classrooms/${id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+    } catch (_) {}
+    setClassrooms((prev) => prev.filter((c) => c.id !== id));
   };
 
   const filtered = classrooms.filter(
@@ -72,13 +149,22 @@ export const ClassroomsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((room) => (
-          <div key={room.id} className="glass-panel glass-panel-hover rounded-2xl p-6 relative">
+          <div key={room.id} className="glass-panel glass-panel-hover rounded-2xl p-6 relative group">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-bold text-white">{room.name}</span>
-              <span className="flex items-center space-x-1 text-[11px] font-semibold text-brand-400 bg-brand-500/10 px-2.5 py-0.5 rounded-full border border-brand-500/20">
-                <Shield className="h-3 w-3" />
-                <span>{room.radius}m Radius</span>
-              </span>
+              <div className="flex items-center space-x-2">
+                <span className="flex items-center space-x-1 text-[11px] font-semibold text-brand-400 bg-brand-500/10 px-2.5 py-0.5 rounded-full border border-brand-500/20">
+                  <Shield className="h-3 w-3" />
+                  <span>{room.radius || room.radiusMeters || 75}m Radius</span>
+                </span>
+                <button
+                  onClick={() => handleDelete(room.id)}
+                  title="Remove Classroom Geofence"
+                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-red-400 transition-all"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
 
             <div className="text-xs text-slate-400 mb-4">{room.building}</div>

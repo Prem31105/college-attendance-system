@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -41,6 +41,19 @@ export class AdminController {
     @Body() body: { name: string; building: string; latitude: number; longitude: number; geofenceRadiusMeters?: number },
   ) {
     return this.adminService.createClassroom(body);
+  }
+
+  @Patch('classrooms/:id')
+  async updateClassroom(
+    @Param('id') id: string,
+    @Body() body: { name?: string; building?: string; latitude?: number; longitude?: number; geofenceRadiusMeters?: number },
+  ) {
+    return this.adminService.updateClassroom(id, body);
+  }
+
+  @Delete('classrooms/:id')
+  async deleteClassroom(@Param('id') id: string) {
+    return this.adminService.deleteClassroom(id);
   }
 
   @Get('audit-logs')

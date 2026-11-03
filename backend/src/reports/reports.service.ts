@@ -359,4 +359,159 @@ export class ReportsService {
       students: studentReports,
     };
   }
+
+  /**
+   * Generates department-wide attendance audit and compliance report.
+   */
+  async getDepartmentComplianceReport(departmentId?: string) {
+    const students = await this.prisma.student.findMany({
+      where: departmentId ? { departmentId } : {},
+      include: {
+        user: true,
+        department: true,
+        enrollments: {
+          include: {
+            subject: true,
+          },
+        },
+      },
+      orderBy: { rollNumber: 'asc' },
+    });
+
+    const studentSummaries = [];
+    let compliantCount = 0;
+    let shortageCount = 0;
+
+    for (const student of students) {
+      const subjectIds = student.enrollments.map((e) => e.subjectId);
+
+      const totalHeld = await this.prisma.attendanceSession.count({
+        where: {
+          subjectId: { in: subjectIds },
+          sectionId: student.sectionId,
+          status: 'CLOSED',
+        },
+      });
+
+      const totalAttended = await this.prisma.attendanceRecord.count({
+        where: {
+          studentId: student.id,
+          status: 'VERIFIED',
+        },
+      });
+
+      const percentage = totalHeld > 0 ? Math.round((totalAttended / totalHeld) * 1000) / 10 : 100.0;
+      const isShortage = percentage < 75.0;
+
+      if (isShortage) {
+        shortageCount++;
+      } else {
+        compliantCount++;
+      }
+
+      const predictive = this.calculatePredictiveMetrics(totalAttended, totalHeld, 75.0);
+
+      studentSummaries.push({
+        studentId: student.id,
+        rollNumber: student.rollNumber,
+        name: `${student.user.firstName} ${student.user.lastName}`,
+        email: student.user.email,
+        department: student.department.name,
+        departmentCode: student.department.code,
+        classesHeld: totalHeld,
+        classesAttended: totalAttended,
+        classesMissed: Math.max(0, totalHeld - totalAttended),
+        percentage,
+        status: isShortage ? 'CRITICAL_SHORTAGE' : 'COMPLIANT',
+        safeBunks: predictive.safeBunks,
+        requiredRecoveryLectures: predictive.requiredConsecutiveLectures,
+      });
+    }
+
+    const totalStudents = students.length;
+    const complianceRate = totalStudents > 0 ? Math.round((compliantCount / totalStudents) * 1000) / 10 : 100.0;
+
+    return {
+      departmentId: departmentId || 'ALL_DEPARTMENTS',
+      totalStudents,
+      compliantStudents: compliantCount,
+      shortageStudents: shortageCount,
+      complianceRate,
+      generatedAt: new Date().toISOString(),
+      students: studentSummaries,
+    };
+  }
+
+  /**
+   * Generates RFC 4180 compliant CSV export of student attendance.
+   */
+  async exportComplianceCsv(departmentId?: string): Promise<string> {
+    const report = await this.getDepartmentComplianceReport(departmentId);
+
+    const headers = [
+      'Roll Number',
+      'Student Name',
+      'Email',
+      'Department',
+      'Classes Held',
+      'Classes Attended',
+      'Classes Missed',
+      'Percentage (%)',
+      'Compliance Status',
+      'Safe Bunks (at 75%)',
+      'Required Recovery Lectures',
+    ];
+
+    const rows = report.students.map((s) => [
+      `"${s.rollNumber}"`,
+      `"${s.name}"`,
+      `"${s.email}"`,
+      `"${s.department}"`,
+      s.classesHeld,
+      s.classesAttended,
+      s.classesMissed,
+      `${s.percentage}%`,
+      `"${s.status}"`,
+      s.safeBunks,
+      s.requiredRecoveryLectures,
+    ]);
+
+    return [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+  }
+
+  /**
+   * Generates CSV export containing only students with attendance shortfall (<75%).
+   */
+  async exportShortageCsv(departmentId?: string): Promise<string> {
+    const report = await this.getDepartmentComplianceReport(departmentId);
+    const shortageStudents = report.students.filter((s) => s.percentage < 75.0);
+
+    const headers = [
+      'Roll Number',
+      'Student Name',
+      'Email',
+      'Department',
+      'Classes Held',
+      'Classes Attended',
+      'Attendance (%)',
+      'Mandatory Target',
+      'Required Consecutive Lectures to Qualify',
+      'Shortage Warning',
+    ];
+
+    const rows = shortageStudents.map((s) => [
+      `"${s.rollNumber}"`,
+      `"${s.name}"`,
+      `"${s.email}"`,
+      `"${s.department}"`,
+      s.classesHeld,
+      s.classesAttended,
+      `${s.percentage}%`,
+      '75%',
+      s.requiredRecoveryLectures,
+      '"CRITICAL: Risk of semester examination detention"',
+    ]);
+
+    return [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+  }
 }

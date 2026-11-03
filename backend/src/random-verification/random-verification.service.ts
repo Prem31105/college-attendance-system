@@ -125,4 +125,18 @@ export class RandomVerificationService {
 
     return updated;
   }
+
+  /**
+   * Retrieves all random verification challenges for a session.
+   */
+  async getSessionChallenges(sessionId: string) {
+    return this.prisma.randomVerificationChallenge.findMany({
+      where: { sessionId },
+      include: {
+        student: {
+          include: { user: true },
+        },
+      },
+    });
+  }
 }

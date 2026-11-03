@@ -1,73 +1,61 @@
 # AGENT_HANDOFF.md
 
 ## Current Work Session Summary
-- **Current Objective**: Phase 3 — Hardware Security, Cryptographic Binding & Dynamic QR Attendance Workflow.
-- **Status**: **Phase 3 Verified & Complete — Full Dynamic QR Attendance Loop Operational**.
+- **Current Objective**: Phase 4 — Administration, Real-Time Monitoring & Physical Verification.
+- **Status**: **Phase 4 Verified & Complete — Administrative Monitoring & Physical Verification Operational**.
 - **Key Deliverables in this Session**:
-  - **Task 1: Backend Dynamic QR & Device Challenge API Polish (`backend`)**:
-    - Added `refreshDynamicQr(sessionId, teacherId)` in [`backend/src/attendance-sessions/attendance-sessions.service.ts`](file:///D:/flutter%20attandance/backend/src/attendance-sessions/attendance-sessions.service.ts) generating HMAC-SHA256 tokens and broadcasting via WebSocket `eventsGateway.broadcastQrRefresh`.
-    - Added `@Post(':sessionId/qr/refresh')` and `@Get(':sessionId/qr')` endpoints in [`backend/src/attendance-sessions/attendance-sessions.controller.ts`](file:///D:/flutter%20attandance/backend/src/attendance-sessions/attendance-sessions.controller.ts).
-    - Updated `DevicesService.generateChallenge(studentId, deviceId?)` in [`backend/src/devices/devices.service.ts`](file:///D:/flutter%20attandance/backend/src/devices/devices.service.ts) allowing students with an active registered device to request challenge tokens without passing internal device UUIDs.
-    - Atomically enforced single-use challenge tokens (`deviceChallenge.isUsed = true`) preventing replay attacks.
-    - Idempotent duplicate protection enforced via atomic unique constraint `sessionId_studentId` throwing HTTP 409 `ConflictException`.
-    - Multiple eligible students can scan and redeem the exact same valid dynamic QR concurrently without invalidating it for others.
-    - Non-blocking risk evaluation: suspicious attempts (e.g. mock locations) receive `SUSPICIOUS` status for teacher review without blocking low-risk students.
-  - **Task 2: Teacher Web Dashboard Live Dynamic QR & Override Polish (`web_dashboard`)**:
-    - Enhanced [`web_dashboard/src/pages/teacher/LiveSessionPage.tsx`](file:///D:/flutter%20attandance/web_dashboard/src/pages/teacher/LiveSessionPage.tsx) to fetch real signed dynamic QR tokens from backend endpoint every 15s.
-    - Added live attendance table action: Suspicious student attempts display a one-click "Verify" button pre-populating roll number and opening manual override modal.
-    - Submits manual overrides to `POST /api/v1/attendance/manual-mark` with mandatory instructor reason and writes immutable audit log trail.
-    - Production Vite bundle built cleanly in 4.36s with 0 errors.
-  - **Task 3: Student Mobile Dynamic Scanner Integration (`student_mobile`)**:
-    - Added `getDeviceChallenge([deviceId])` in [`student_mobile/lib/core/services/api_service.dart`](file:///D:/flutter%20attandance/student_mobile/lib/core/services/api_service.dart).
-    - Updated `AttendanceScannerScreen` in [`student_mobile/lib/screens/attendance_scanner_screen.dart`](file:///D:/flutter%20attandance/student_mobile/lib/screens/attendance_scanner_screen.dart): parses dynamic QR JSON (`sid`, `sub`, `iat`, `exp`, `non`, `sig`), acquires real GPS coordinates via `LocationService`, requests device challenge, signs with hardware Keystore ECDSA private key, and submits evidence to `/attendance/submit`.
-    - Fixed static analysis getters (`eval.latitude`, `eval.longitude`, `eval.accuracyMeters`).
-    - `flutter analyze --no-pub`: 0 issues found in 2.2s.
-    - `flutter test`: 30 / 30 passed.
-  - **Task 4: Comprehensive Automated Test Suite (`backend/src/attendance/attendance.service.spec.ts`)**:
-    - Created comprehensive unit testing suite with 12 tests covering:
-      1. Valid attendance submission (low-risk -> `VERIFIED`)
-      2. Expired QR token rejection (`QR_TOKEN_EXPIRED` -> `REJECTED`)
-      3. Tampered / invalid QR HMAC signature rejection (`INVALID_QR_SIGNATURE` -> `REJECTED`)
-      4. GPS outside geofence boundary (> 75m -> `REJECTED`)
-      5. Poor GPS accuracy (> 20m -> `REJECTED`)
-      6. Device signature verification failure (`CRYPTOGRAPHIC_SIGNATURE_INVALID` -> `REJECTED`)
-      7. Challenge replay attack rejection (`CHALLENGE_ALREADY_USED_REPLAY_ATTEMPT` -> `REJECTED`)
-      8. Duplicate attendance submission rejection (`ConflictException` HTTP 409)
-      9. Concurrent student scans of same valid dynamic QR (both succeed)
-      10. Mock location spoofing detection (`SUSPICIOUS` status flagged, low-risk students unblocked)
-      11. Mandatory reason validation for teacher manual overrides (min 5 chars)
-      12. Immutable audit log persistence for teacher manual overrides
-    - All 28 backend unit tests passing in-band (`jest --runInBand`).
+  - **Task 1: Risk-Based Random Physical Verification (`backend` & `web_dashboard`)**:
+    - Created dedicated [`backend/src/random-verification/random-verification.controller.ts`](file:///D:/flutter%20attandance/backend/src/random-verification/random-verification.controller.ts) with `POST /sessions/:sessionId/random-verification/trigger`, `POST /random-verification/:challengeId/outcome`, and `GET /sessions/:sessionId/random-verification`.
+    - Implemented Fisher-Yates sampling of present students, in-app notification alerts with type `VERIFICATION_ALERT`, and WebSocket broadcasts.
+    - Automatic absence penalty: If marked `ABSENT` by teacher, student attendance record status is immediately flagged as `SUSPICIOUS` with `reasonCode: FAILED_RANDOM_PHYSICAL_VERIFICATION`.
+    - Integrated with [`web_dashboard/src/pages/teacher/LiveSessionPage.tsx`](file:///D:/flutter%20attandance/web_dashboard/src/pages/teacher/LiveSessionPage.tsx): Top "Random Physical Check" button triggers real sampling, dynamic modal presents sampled students with "Present" and "Absent" action buttons.
+  - **Task 2: Multi-Classroom Geofence Management (`backend` & `web_dashboard`)**:
+    - Added `updateClassroom` and `deleteClassroom` methods in [`backend/src/admin/admin.service.ts`](file:///D:/flutter%20attandance/backend/src/admin/admin.service.ts).
+    - Exposed `PATCH /admin/classrooms/:id` and `DELETE /admin/classrooms/:id` in [`backend/src/admin/admin.controller.ts`](file:///D:/flutter%20attandance/backend/src/admin/admin.controller.ts).
+    - Integrated with [`web_dashboard/src/pages/admin/ClassroomsPage.tsx`](file:///D:/flutter%20attandance/web_dashboard/src/pages/admin/ClassroomsPage.tsx): loads live classrooms from REST endpoint, provides zone creation modal with custom geofence radius (25m - 150m), and interactive delete zone actions.
+  - **Task 3: Department-Wide Attendance Auditing & Analytics (`backend` & `web_dashboard`)**:
+    - Implemented `getDepartmentComplianceReport(departmentId?)` in [`backend/src/reports/reports.service.ts`](file:///D:/flutter%20attandance/backend/src/reports/reports.service.ts) calculating aggregate compliance rate, identifying $<75\%$ critical shortage students, safe bunks, and required recovery lectures.
+    - Added audit trail logging in `AdminService.resolveSuspiciousRecord` writing immutable `AttendanceAuditLog` entries with admin actor ID, old status, and new resolution (`VERIFIED` or `REJECTED`).
+    - Enhanced [`web_dashboard/src/pages/admin/AdminDashboard.tsx`](file:///D:/flutter%20attandance/web_dashboard/src/pages/admin/AdminDashboard.tsx):
+      - Live analytics metrics cards (`totalStudents`, `totalTeachers`, `activeSessions`, `attendanceRate`).
+      - Tabbed views: Analytics & System Health, Immutable Audit Trail table, and Suspicious Incidents queue with one-click "Verify" and "Reject" adjudication actions.
+  - **Task 4: Exportable RFC 4180 Compliance & Critical Shortage CSV Reports (`backend`)**:
+    - Implemented `exportComplianceCsv` returning standard compliance CSV with headers `Roll Number,Student Name,Email,Department,Classes Held,Classes Attended,Classes Missed,Percentage (%),Compliance Status,Safe Bunks (at 75%),Required Recovery Lectures`.
+    - Implemented `exportShortageCsv` returning CSV of students below 75% with calculated required consecutive recovery lectures formula.
+    - Added `@Get('export/csv')` and `@Get('export/shortage/csv')` in [`backend/src/reports/reports.controller.ts`](file:///D:/flutter%20attandance/backend/src/reports/reports.controller.ts) with `text/csv` Content-Type and attachment Content-Disposition headers for direct browser downloads.
+    - Added quick-download buttons in `AdminDashboard.tsx`.
+  - **Task 5: Automated Verification Suite (`backend/scripts/verify-phase4-admin.ts`)**:
+    - Created dedicated verification script verifying 20 checks across all 4 Phase 4 sections against PostgreSQL (20/20 passed).
 
-## Verification Summary Table (Phase 3)
+## Verification Summary Table (Phase 4)
 | Verification Dimension | Implementation & Test Coverage | Classification | Status |
 | :--- | :--- | :--- | :--- |
-| **1. Dynamic QR Refresh** | `POST /sessions/:sessionId/qr/refresh`, 15s refresh / 30s expiry, HMAC-SHA256 | Backend & Web | **PASS** |
-| **2. Concurrent QR Redemption** | Verified 2 distinct students scan exact same valid QR concurrently | Backend & Database | **PASS** |
-| **3. Device-Bound Challenge** | `POST /devices/challenge`, 60s validity, ECDSA P-256 verification | Cryptography | **PASS** |
-| **4. Replay Protection** | `deviceChallenge.isUsed` marked atomically; replayed challenge rejected | Security Engine | **PASS** |
-| **5. Duplicate Protection** | `sessionId_studentId` atomic unique constraint, HTTP 409 Conflict | Database & Logic | **PASS** |
-| **6. Geofence Enforcement** | 75m default boundary, >75m rejected, accuracy >20m rejected | Location Engine | **PASS** |
-| **7. Suspicious Flagging** | Mock location detected -> `SUSPICIOUS`, low-risk students unblocked | Risk Engine | **PASS** |
-| **8. Teacher Manual Override** | Requires min 5-char reason, writes immutable audit log trail | Admin & Audit | **PASS** |
-| **9. Backend Unit Tests** | Jest 28/28 passed in-band (`attendance`, `reports`, `gps`, `risk`) | Unit Tests | **PASS** |
-| **10. Flutter Test Suite** | 30/30 passed (`attendance_guider`, `location_service`, `attendance`, `notification`, `widget`) | Complete Suite | **PASS** |
-| **11. Static Analysis** | `flutter analyze --no-pub` clean (0 errors, 0 warnings in 2.2s) | Static Analysis | **PASS** |
-| **12. Web Dashboard Build** | Vite production bundle built in 4.36s with 0 errors | Production Build | **PASS** |
-| **13. Backend E2E Suite** | 19/19 passed (`verify-e2e-workflow.ts`) | E2E Integration | **PASS** |
-| **14. Notification Suite** | 12/12 passed (`verify-notifications-flow.ts`) | REST & RBAC | **PASS** |
+| **1. Classroom Geofence Management** | `GET`, `POST`, `PATCH`, `DELETE /admin/classrooms` verified | Admin REST CRUD | **PASS** |
+| **2. Random Physical Verification Trigger** | Fisher-Yates sampling, `PENDING` challenge generation | Random Check Engine | **PASS** |
+| **3. In-Person Outcome & Absence Penalty** | `VERIFIED` and `ABSENT` outcomes; Absence marks `SUSPICIOUS` | Physical Audit | **PASS** |
+| **4. Session Challenges Retrieval** | `GET /sessions/:sessionId/random-verification` | Real-Time Monitoring | **PASS** |
+| **5. Department Compliance Report** | Aggregate calculation, $<75\%$ shortage detection | Compliance Engine | **PASS** |
+| **6. System Audit Logs & Analytics** | `GET /admin/analytics` and `GET /admin/audit-logs` | Auditing & Metrics | **PASS** |
+| **7. Suspicious Record Adjudication** | Admin resolve to `VERIFIED`/`REJECTED` with audit trail | Security Adjudication | **PASS** |
+| **8. Export Compliance CSV** | RFC 4180 CSV export with standard headers | Reports & Export | **PASS** |
+| **9. Export Shortage CSV** | RFC 4180 CSV with recovery lectures formula | Reports & Export | **PASS** |
+| **10. Phase 4 Verification Suite** | 20/20 passed (`verify-phase4-admin.ts`) | E2E Section Verification | **PASS** |
+| **11. Backend Unit Tests** | 28/28 passed in-band (`attendance`, `reports`, `gps`, `risk`) | Unit Tests | **PASS** |
+| **12. Flutter Test Suite** | 30/30 passed (`attendance_guider`, `location_service`, `attendance`, `notification`, `widget`) | Complete Suite | **PASS** |
+| **13. Flutter Static Analysis** | `flutter analyze --no-pub` clean (0 issues in 2.6s) | Static Analysis | **PASS** |
+| **14. Web Dashboard Production Build** | Vite production bundle built in 5.12s with 0 errors | Production Build | **PASS** |
 
-## Next Planned Milestone (Phase 4)
-- **Phase 4: Administration, Real-Time Monitoring & Verification**:
-  - In-session random physical verification challenges.
-  - Multi-classroom geofence management.
-  - Department-wide attendance auditing and exportable compliance reports.
-- **IMPORTANT**: **DO NOT START Phase 4 automatically without user prompt / instruction.**
+## Next Planned Milestone (Phase 5)
+- **Phase 5: Production Readiness, Security Hardening & Complete System Verification**:
+  - Final end-to-end security audits.
+  - Rate limiting, CSRF, and security headers.
+  - End-to-end verification and documentation finalization.
+- **IMPORTANT**: **DO NOT START Phase 5 automatically without user prompt / instruction.**
 
 ## Exact Commands to Resume & Continue
-1. **Run Flutter Tests**: `$env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; cd "D:\flutter attandance\student_mobile" && flutter test`
-2. **Run Flutter Analysis**: `$env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; cd "D:\flutter attandance\student_mobile" && flutter analyze --no-pub`
-3. **Run Backend Unit Tests**: `cd "D:\flutter attandance\backend" && npm test -- --runInBand`
-4. **Run Backend E2E Suite**: `cd "D:\flutter attandance\backend" && npx ts-node scripts/verify-e2e-workflow.ts`
+1. **Run Phase 4 Verification Suite**: `cd "D:\flutter attandance\backend" && npx ts-node scripts/verify-phase4-admin.ts`
+2. **Run Backend Unit Tests**: `cd "D:\flutter attandance\backend" && npm test -- --runInBand`
+3. **Run Flutter Tests**: `$env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; cd "D:\flutter attandance\student_mobile" && flutter test`
+4. **Run Flutter Analysis**: `$env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; cd "D:\flutter attandance\student_mobile" && flutter analyze --no-pub`
 5. **Run Web Dashboard Build**: `$env:TEMP="D:\tmp"; $env:TMP="D:\tmp"; $env:NODE_OPTIONS="--max-old-space-size=2048"; cd "D:\flutter attandance\web_dashboard" && npm run build`
 6. **Create Checkpoint**: `powershell -ExecutionPolicy Bypass -File scripts/checkpoint.ps1 -Description "description"`
