@@ -125,19 +125,19 @@ class _AttendanceCorrectionScreenState extends State<AttendanceCorrectionScreen>
                   const SizedBox(height: 12),
 
                   if (_disputes.isEmpty)
-                    Card(
+                    const Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(24.0),
+                        padding: EdgeInsets.all(24.0),
                         child: Column(
                           children: [
-                            const Icon(Icons.forum_outlined, size: 40, color: Colors.grey),
-                            const SizedBox(height: 10),
-                            const Text(
+                            Icon(Icons.forum_outlined, size: 40, color: Colors.grey),
+                            SizedBox(height: 10),
+                            Text(
                               'No disputes filed yet.',
                               style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                             ),
-                            const SizedBox(height: 4),
-                            const Text(
+                            SizedBox(height: 4),
+                            Text(
                               'All your attendance records are up to date.',
                               style: TextStyle(fontSize: 12, color: Colors.grey),
                             ),

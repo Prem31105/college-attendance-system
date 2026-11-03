@@ -109,6 +109,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
                     ),
                   );
                   await _loadHistory();
+                  if (!mounted) return;
                   final disputeData = res['data'];
                   if (disputeData != null && disputeData['id'] != null) {
                     Navigator.push(
