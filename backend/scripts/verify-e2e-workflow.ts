@@ -60,11 +60,11 @@ async function runE2EVerification() {
   // 2. Fetch seeded actors
   const adminUser = await prisma.user.findUnique({ where: { email: 'admin@college.edu' } });
   const teacherUser = await prisma.user.findUnique({
-    where: { email: 'prof.smith@college.edu' },
+    where: { email: 'prof.mehta@college.edu' },
     include: { teacher: true },
   });
   const studentUser1 = await prisma.user.findUnique({
-    where: { email: 'john.doe@college.edu' },
+    where: { email: 'aarav.sharma@college.edu' },
     include: { student: true },
   });
 
@@ -74,13 +74,16 @@ async function runE2EVerification() {
 
   // Verify second student for concurrent scan testing
   const studentUser2 = await prisma.user.upsert({
-    where: { email: 'jane.roe@college.edu' },
-    update: {},
+    where: { email: 'riya.patel@college.edu' },
+    update: {
+      firstName: 'Riya',
+      lastName: 'Patel',
+    },
     create: {
-      email: 'jane.roe@college.edu',
+      email: 'riya.patel@college.edu',
       passwordHash: await argon2.hash('StudentSecure123!'),
-      firstName: 'Jane',
-      lastName: 'Roe',
+      firstName: 'Riya',
+      lastName: 'Patel',
       role: Role.STUDENT,
       isActive: true,
       student: {
@@ -178,10 +181,10 @@ async function runE2EVerification() {
 
   // Register device for Student 2 with real ECDSA public key
   const registeredDevice2 = await prisma.registeredDevice.upsert({
-    where: { id: 'device-jane-roe-002' },
+    where: { id: 'device-riya-patel-002' },
     update: { publicKeyPem: pubKey2 },
     create: {
-      id: 'device-jane-roe-002',
+      id: 'device-riya-patel-002',
       studentId: studentUser2.student!.id,
       deviceFingerprint: 'SM-G998B-ANDROID-14-HW-TOKEN-992',
       publicKeyPem: pubKey2,

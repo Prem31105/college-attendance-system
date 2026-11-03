@@ -56,11 +56,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (email.includes('admin')) {
           userData = { id: 'admin-1', email, firstName: 'College', lastName: 'Administrator', role: 'ADMIN' };
           token = 'mock_jwt_admin_token';
-        } else if (email.includes('teacher') || email.includes('smith')) {
-          userData = { id: 'teacher-1', email, firstName: 'Alan', lastName: 'Smith', role: 'TEACHER', teacherId: 'teacher-101' };
+        } else if (email.includes('teacher') || email.includes('mehta')) {
+          userData = { id: 'teacher-1', email, firstName: 'Rahul', lastName: 'Mehta', role: 'TEACHER', teacherId: 'teacher-101' };
           token = 'mock_jwt_teacher_token';
         } else {
-          userData = { id: 'student-1', email, firstName: 'John', lastName: 'Doe', role: 'STUDENT', studentId: 'student-101' };
+          userData = { id: 'student-1', email, firstName: 'Aarav', lastName: 'Sharma', role: 'STUDENT', studentId: 'student-101' };
           token = 'mock_jwt_student_token';
         }
       }

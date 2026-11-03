@@ -133,13 +133,16 @@ async function main() {
 
   // 9. Teachers
   const teacherUser1 = await prisma.user.upsert({
-    where: { email: 'prof.smith@college.edu' },
-    update: {},
+    where: { email: 'prof.mehta@college.edu' },
+    update: {
+      firstName: 'Rahul',
+      lastName: 'Mehta',
+    },
     create: {
-      email: 'prof.smith@college.edu',
+      email: 'prof.mehta@college.edu',
       passwordHash: teacherPassHash,
-      firstName: 'Alan',
-      lastName: 'Smith',
+      firstName: 'Rahul',
+      lastName: 'Mehta',
       role: Role.TEACHER,
       isActive: true,
     },
@@ -177,13 +180,16 @@ async function main() {
 
   // 10. Students
   const studentUser1 = await prisma.user.upsert({
-    where: { email: 'john.doe@college.edu' },
-    update: {},
+    where: { email: 'aarav.sharma@college.edu' },
+    update: {
+      firstName: 'Aarav',
+      lastName: 'Sharma',
+    },
     create: {
-      email: 'john.doe@college.edu',
+      email: 'aarav.sharma@college.edu',
       passwordHash: studentPassHash,
-      firstName: 'John',
-      lastName: 'Doe',
+      firstName: 'Aarav',
+      lastName: 'Sharma',
       role: Role.STUDENT,
       isActive: true,
     },
@@ -218,17 +224,17 @@ async function main() {
     },
   });
 
-  // Register John Doe's Primary Device (Sample P-256 ECDSA public key)
+  // Register Aarav Sharma's Primary Device (Sample P-256 ECDSA public key)
   const demoPublicKeyPem = `-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7p9r7E+k9hVb3W3Wd2WJ2+cI0q2a
 b9/W4D0+zDq+Y4lU5K6tM3v7wO7N3nZ5G1h9j3K8l7k5h7b4k2m9l4a7wQ==
 -----END PUBLIC KEY-----`;
 
   await prisma.registeredDevice.upsert({
-    where: { id: 'device-john-doe-001' },
+    where: { id: 'device-aarav-sharma-001' },
     update: {},
     create: {
-      id: 'device-john-doe-001',
+      id: 'device-aarav-sharma-001',
       studentId: student1.id,
       deviceFingerprint: 'SM-G998B-ANDROID-14-HW-TOKEN-991',
       publicKeyPem: demoPublicKeyPem,
@@ -242,8 +248,8 @@ b9/W4D0+zDq+Y4lU5K6tM3v7wO7N3nZ5G1h9j3K8l7k5h7b4k2m9l4a7wQ==
   console.log('✅ Database seeding completed successfully!');
   console.log('Credentials Summary:');
   console.log('  Admin:   admin@college.edu       / AdminSecure123!');
-  console.log('  Teacher: prof.smith@college.edu  / TeacherSecure123!');
-  console.log('  Student: john.doe@college.edu    / StudentSecure123!');
+  console.log('  Teacher: prof.mehta@college.edu  / TeacherSecure123!');
+  console.log('  Student: aarav.sharma@college.edu / StudentSecure123!');
 }
 
 main()

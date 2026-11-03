@@ -76,7 +76,7 @@ describe('AttendanceService - Dynamic QR Attendance & Risk Verification', () => 
           markedAt: new Date(),
           student: {
             rollNumber: 'CS2026-001',
-            user: { firstName: 'John', lastName: 'Doe' },
+            user: { firstName: 'Aarav', lastName: 'Sharma' },
           },
         })),
         upsert: jest.fn().mockImplementation(({ create, update }) => ({
@@ -86,7 +86,7 @@ describe('AttendanceService - Dynamic QR Attendance & Risk Verification', () => 
           markedAt: new Date(),
           student: {
             rollNumber: 'CS2026-001',
-            user: { firstName: 'John', lastName: 'Doe' },
+            user: { firstName: 'Aarav', lastName: 'Sharma' },
           },
         })),
       },

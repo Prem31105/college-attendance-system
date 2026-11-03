@@ -53,8 +53,8 @@ class ApiService {
           'user': {
             'id': 'stud-001',
             'email': email,
-            'firstName': 'John',
-            'lastName': 'Doe',
+            'firstName': 'Aarav',
+            'lastName': 'Sharma',
             'rollNumber': 'CS2026-001',
             'role': 'STUDENT',
           },

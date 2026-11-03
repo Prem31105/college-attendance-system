@@ -32,7 +32,7 @@ async function main() {
     throw new Error('Classroom not found');
   }
 
-  // 1. Enroll John Doe in CS602 if not already enrolled
+  // 1. Enroll Aarav Sharma in CS602 if not already enrolled
   await prisma.enrollment.upsert({
     where: {
       studentId_subjectId: {

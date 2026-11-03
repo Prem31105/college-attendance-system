@@ -13,7 +13,7 @@ class RegistrationScreen extends StatefulWidget {
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
   final _rollController = TextEditingController(text: 'CS2026-001');
-  final _emailController = TextEditingController(text: 'john.doe@college.edu');
+  final _emailController = TextEditingController(text: 'aarav.sharma@college.edu');
   final _regNumberController = TextEditingController(text: '202698765432');
   final _passwordController = TextEditingController();
 

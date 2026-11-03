@@ -301,7 +301,7 @@ class AttendanceGuiderService {
           .toList();
 
       final report = AttendanceGuiderReport(
-        studentName: student['name'] ?? 'John Doe',
+        studentName: student['name'] ?? 'Aarav Sharma',
         rollNumber: student['rollNumber'] ?? 'CS2026-001',
         department: student['department'] ?? 'Computer Science and Engineering',
         targetPercentage: targetPercentage,
@@ -354,7 +354,7 @@ class AttendanceGuiderService {
     ];
 
     final report = AttendanceGuiderReport(
-      studentName: 'John Doe',
+      studentName: 'Aarav Sharma',
       rollNumber: 'CS2026-001',
       department: 'Computer Science and Engineering',
       targetPercentage: target,

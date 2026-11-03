@@ -86,7 +86,7 @@ void main() {
       final service = AttendanceGuiderService();
       final report75 = service.recalculateReport(
         AttendanceGuiderReport(
-          studentName: 'Test Student',
+          studentName: 'Aarav Sharma',
           rollNumber: 'CS2026-001',
           department: 'CSE',
           targetPercentage: 75.0,

@@ -240,7 +240,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 8),
                   const Text('CS601: Advanced Distributed Systems', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                   const SizedBox(height: 2),
-                  const Text('Room 401 • Dr. Alan Smith • 75m Geofence', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  const Text('Room 401 • Prof. Rahul Mehta • 75m Geofence', style: TextStyle(fontSize: 12, color: Colors.grey)),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
                     onPressed: () {

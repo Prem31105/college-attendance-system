@@ -6,9 +6,9 @@ class TimetableScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final schedule = [
-      {'time': '09:00 AM - 10:30 AM', 'code': 'CS601', 'name': 'Advanced Distributed Systems', 'room': 'Room 401', 'teacher': 'Dr. Alan Smith'},
-      {'time': '10:45 AM - 12:15 PM', 'code': 'CS602', 'name': 'Cryptography & Network Security', 'room': 'Room 402', 'teacher': 'Dr. Sarah Davis'},
-      {'time': '01:30 PM - 03:00 PM', 'code': 'CS603', 'name': 'Mobile Application Development', 'room': 'Lab 3', 'teacher': 'Prof. Rajesh Kumar'},
+      {'time': '09:00 AM - 10:30 AM', 'code': 'CS601', 'name': 'Advanced Distributed Systems', 'room': 'Room 401', 'teacher': 'Prof. Rahul Mehta'},
+      {'time': '10:45 AM - 12:15 PM', 'code': 'CS602', 'name': 'Cryptography & Network Security', 'room': 'Room 402', 'teacher': 'Prof. Sneha Kulkarni'},
+      {'time': '01:30 PM - 03:00 PM', 'code': 'CS603', 'name': 'Mobile Application Development', 'room': 'Lab 3', 'teacher': 'Prof. Amit Joshi'},
     ];
 
     return Scaffold(

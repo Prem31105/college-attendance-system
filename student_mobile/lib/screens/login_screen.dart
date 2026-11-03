@@ -12,7 +12,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'john.doe@college.edu');
+  final _emailController = TextEditingController(text: 'aarav.sharma@college.edu');
   final _passController = TextEditingController(text: 'StudentSecure123!');
   bool _loading = false;
   bool _obscurePassword = true;
@@ -23,10 +23,10 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _selectedRole = role;
       if (role == 'STUDENT') {
-        _emailController.text = 'john.doe@college.edu';
+        _emailController.text = 'aarav.sharma@college.edu';
         _passController.text = 'StudentSecure123!';
       } else if (role == 'TEACHER') {
-        _emailController.text = 'alan.smith@college.edu';
+        _emailController.text = 'prof.mehta@college.edu';
         _passController.text = 'TeacherSecure123!';
       } else {
         _emailController.text = 'admin@college.edu';

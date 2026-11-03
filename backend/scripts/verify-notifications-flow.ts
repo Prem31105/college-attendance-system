@@ -16,7 +16,7 @@ async function runNotificationsVerification() {
     console.log('  ✅ [PASS] 1. Connected to live PostgreSQL database');
     passed++;
 
-    // Find test users (Admin, Teacher, Student)
+    // Find actors (Admin, Teacher, Student)
     const admin = await prisma.user.findFirst({ where: { role: Role.ADMIN } });
     const teacher = await prisma.user.findFirst({ where: { role: Role.TEACHER } });
     const student = await prisma.user.findFirst({ where: { role: Role.STUDENT } });

@@ -20,8 +20,8 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('John Doe', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-            const Text('john.doe@college.edu', style: TextStyle(fontSize: 13, color: Colors.grey)),
+            const Text('Aarav Sharma', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            const Text('aarav.sharma@college.edu', style: TextStyle(fontSize: 13, color: Colors.grey)),
             const SizedBox(height: 24),
             const Card(
               child: Padding(

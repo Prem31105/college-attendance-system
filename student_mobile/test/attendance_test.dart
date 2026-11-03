@@ -30,8 +30,8 @@ void main() {
     });
 
     test('Institutional email validation (@college.edu only)', () {
-      expect(CredentialValidator.isValidInstitutionalEmail('john.doe@college.edu'), isTrue);
-      expect(CredentialValidator.isValidInstitutionalEmail('alan.smith@college.edu'), isTrue);
+      expect(CredentialValidator.isValidInstitutionalEmail('aarav.sharma@college.edu'), isTrue);
+      expect(CredentialValidator.isValidInstitutionalEmail('prof.mehta@college.edu'), isTrue);
       expect(CredentialValidator.isValidInstitutionalEmail('student@gmail.com'), isFalse);
       expect(CredentialValidator.isValidInstitutionalEmail('invalid@yahoo.com'), isFalse);
       expect(CredentialValidator.isValidInstitutionalEmail('@college.edu'), isFalse);

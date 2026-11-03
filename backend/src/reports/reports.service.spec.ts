@@ -119,7 +119,7 @@ describe('ReportsService - Predictive Guider & Analytics', () => {
       mockPrismaService.student.findUnique.mockResolvedValue({
         id: 'stud-123',
         rollNumber: 'CS2026-001',
-        user: { firstName: 'John', lastName: 'Doe' },
+        user: { firstName: 'Aarav', lastName: 'Sharma' },
         department: { name: 'Computer Science and Engineering' },
         enrollments: [
           {

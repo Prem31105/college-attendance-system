@@ -6,7 +6,7 @@ import { ShieldCheck, Lock, Mail, ArrowRight, CheckCircle2 } from 'lucide-react'
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('prof.smith@college.edu');
+  const [email, setEmail] = useState('prof.mehta@college.edu');
   const [password, setPassword] = useState('TeacherSecure123!');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -104,12 +104,12 @@ export const LoginPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleQuickFill('prof.smith@college.edu', 'TeacherSecure123!')}
+                onClick={() => handleQuickFill('prof.mehta@college.edu', 'TeacherSecure123!')}
                 className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-left hover:border-brand-500/30"
               >
                 <div>
                   <div className="text-xs font-medium text-slate-200">Teacher</div>
-                  <div className="text-[10px] text-slate-400">Dr. Alan Smith</div>
+                  <div className="text-[10px] text-slate-400">Prof. Rahul Mehta</div>
                 </div>
                 <CheckCircle2 className="h-3.5 w-3.5 text-brand-400" />
               </button>
